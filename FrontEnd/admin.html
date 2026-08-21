@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HR Onboarding — Admin</title>
+    <style>
+        * { margin:0; padding:0; 
+            box-sizing:border-box; }
+        body { font-family: 'Segoe UI', 
+            sans-serif; background:#f5f6fa; }
+        .navbar {
+            background: #0f3460;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h2 { color: white; 
+            font-size: 18px; }
+        .navbar-right { display: flex; 
+            gap: 15px; align-items: center; }
+        .username-badge { color: #86bc25; 
+            font-weight: 600; font-size: 14px; }
+        .btn-logout {
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-logout:hover { 
+            background: white; 
+            color: #0f3460; }
+        .tab-container {
+            background: white;
+            padding: 0 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab-buttons { display: flex; gap: 5px; }
+        .tab-btn {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            color: #0f3460;
+            border-bottom: 3px solid #0f3460;
+            font-weight: 600;
+        }
+        .content { padding: 30px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .table-header h3 { 
+            color: #0f3460; font-size: 16px; }
+        .btn-add {
+            background: #86bc25;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .search-box {
+            padding: 8px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            width: 200px;
+        }
+        table { width: 100%; 
+            border-collapse: collapse; }
+        thead { background: #f8f9fa; }
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        td {
+            padding: 12px 15px;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        tr:hover { background: #f8f9fa; }
+        .btn-edit {
+            background: #0f3460;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .btn-delete {
+            background: #c62828;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active { 
+            background: #e8f5e9; 
+            color: #2e7d32; }
+        .status-inactive { 
+            background: #fce4ec; 
+            color: #c62828; }
+        .loading-text {
+            text-align: center;
+            color: #666;
+            padding: 30px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <h2>HR Onboarding System — Admin</h2>
+        <div class="navbar-right">
+            <span class="username-badge" 
+                id="usernameDisplay"></span>
+            <button class="btn-logout" 
+                onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" 
+                onclick="showTab('candidates', event)">
+                Candidates
+            </button>
+            <button class="tab-btn" 
+                onclick="showTab('offboarded', event)">
+                Offboarded
+            </button>
+            <button class="tab-btn" 
+                onclick="showTab('training', event)">
+                Training Status
+            </button>
+            <button class="tab-btn" 
+                onclick="showTab('onboarding', event)">
+                Onboarding Steps
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- CANDIDATES TAB -->
+        <div class="tab-content active" 
+             id="tab-candidates">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Candidates</h3>
+                    <div style="display:flex;gap:10px">
+                        <input class="search-box"
+                            type="text"
+                            placeholder="Search..."
+                            onkeyup="filterTable(
+                                'candidatesTable', 
+                                this.value)">
+                        <button class="btn-add">
+                            + Add Candidate
+                        </button>
+                    </div>
+                </div>
+                <table id="candidatesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Join Date</th>
+                            <th>Team</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesBody">
+                        <tr>
+                            <td colspan="8" 
+                                class="loading-text">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- OFFBOARDED TAB -->
+        <div class="tab-content" 
+             id="tab-offboarded">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Offboarded Candidates</h3>
+                    <input class="search-box"
+                        type="text"
+                        placeholder="Search..."
+                        onkeyup="filterTable(
+                            'offboardedTable', 
+                            this.value)">
+                </div>
+                <table id="offboardedTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Join Date</th>
+                            <th>Team</th>
+                            <th>Offboard Date</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="offboardedBody">
+                        <tr>
+                            <td colspan="8" 
+                                class="loading-text">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TRAINING TAB -->
+        <div class="tab-content" 
+             id="tab-training">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Training Status</h3>
+                    <input class="search-box"
+                        type="text"
+                        placeholder="Search..."
+                        onkeyup="filterTable(
+                            'trainingTable', 
+                            this.value)">
+                </div>
+                <table id="trainingTable">
+                    <thead>
+                        <tr>
+                            <th>Candidate ID</th>
+                            <th>Datadog</th>
+                            <th>AKS Trained</th>
+                            <th>ROVO</th>
+                            <th>AI Fluency</th>
+                            <th>Claude 101</th>
+                            <th>Other Cert</th>
+                            <th>Co-Pilot</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trainingBody">
+                        <tr>
+                            <td colspan="8" 
+                                class="loading-text">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ONBOARDING TAB -->
+        <div class="tab-content" 
+             id="tab-onboarding">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Onboarding Steps</h3>
+                    <button class="btn-add">
+                        + Add Step
+                    </button>
+                </div>
+                <div id="onboardingSteps">
+                    <p class="loading-text">
+                        Loading...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API = 'http://localhost:5289';
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        const username = localStorage
+            .getItem('username');
+
+        // Redirect if not admin
+        if (!token || role !== 'Admin') {
+            window.location.href = 'index.html';
+        }
+
+        // Show username
+        document.getElementById('usernameDisplay')
+            .textContent = 'Welcome, ' + username 
+            + ' (Admin)';
+
+        // Load candidates on start
+        loadCandidates();
+
+        function showTab(tabName, event) {
+            document.querySelectorAll('.tab-content')
+                .forEach(function(tab) {
+                    tab.classList.remove('active');
+                });
+            document.querySelectorAll('.tab-btn')
+                .forEach(function(btn) {
+                    btn.classList.remove('active');
+                });
+            document.getElementById(
+                'tab-' + tabName)
+                .classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'candidates') {
+                loadCandidates();
+            } else if (tabName === 'offboarded') {
+                loadOffboarded();
+            } else if (tabName === 'training') {
+                loadTraining();
+            } else if (tabName === 'onboarding') {
+                loadOnboarding();
+            }
+        }
+
+        function loadCandidates() {
+            fetch(API + '/api/candidates', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var tbody = document
+                    .getElementById('candidatesBody');
+                tbody.innerHTML = '';
+                data.forEach(function(c) {
+                    var statusClass = 
+                        c.status === 'Active' ? 
+                        'status-active' : 
+                        'status-inactive';
+                    tbody.innerHTML += '<tr>' +
+                        '<td>' + c.candidateID + '</td>' +
+                        '<td>' + c.name + '</td>' +
+                        '<td>' + c.email + '</td>' +
+                        '<td>' + c.role + '</td>' +
+                        '<td><span class="status-badge ' + 
+                            statusClass + '">' + 
+                            c.status + '</span></td>' +
+                        '<td>' + c.joinDate + '</td>' +
+                        '<td>' + c.team + '</td>' +
+                        '<td>' +
+                        '<button class="btn-edit">Edit</button>' +
+                        '<button class="btn-delete">Delete</button>' +
+                        '</td>' +
+                        '</tr>';
+                });
+            })
+            .catch(function(e) {
+                document.getElementById(
+                    'candidatesBody').innerHTML = 
+                    '<tr><td colspan="8">Error loading</td></tr>';
+            });
+        }
+
+        function loadOffboarded() {
+            fetch(API + '/api/candidates/inactive', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var tbody = document
+                    .getElementById('offboardedBody');
+                tbody.innerHTML = '';
+                data.forEach(function(c) {
+                    tbody.innerHTML += '<tr>' +
+                        '<td>' + c.candidateID + '</td>' +
+                        '<td>' + c.name + '</td>' +
+                        '<td>' + c.email + '</td>' +
+                        '<td>' + c.role + '</td>' +
+                        '<td>' + c.joinDate + '</td>' +
+                        '<td>' + c.team + '</td>' +
+                        '<td>' + (c.offboardDate || 'N/A') + '</td>' +
+                        '<td>' + (c.offboardReason || 'N/A') + '</td>' +
+                        '</tr>';
+                });
+            });
+        }
+
+        function loadTraining() {
+            fetch(API + '/api/training', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var tbody = document
+                    .getElementById('trainingBody');
+                tbody.innerHTML = '';
+                data.forEach(function(t) {
+                    tbody.innerHTML += '<tr>' +
+                        '<td>' + t.candidateID + '</td>' +
+                        '<td>' + ynBadge(t.datadog) + '</td>' +
+                        '<td>' + ynBadge(t.aksTrained) + '</td>' +
+                        '<td>' + ynBadge(t.rovo) + '</td>' +
+                        '<td>' + ynBadge(t.aiFluency) + '</td>' +
+                        '<td>' + ynBadge(t.claude101) + '</td>' +
+                        '<td>' + ynBadge(t.otherCertification) + '</td>' +
+                        '<td>' + ynBadge(t.coPilotTraining) + '</td>' +
+                        '</tr>';
+                });
+            });
+        }
+
+        function loadOnboarding() {
+            fetch(API + '/api/onboarding/steps', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var container = document
+                    .getElementById('onboardingSteps');
+                container.innerHTML = '';
+                data.sort(function(a, b) {
+                    return a.stepOrder - b.stepOrder;
+                });
+                data.forEach(function(step) {
+                    container.innerHTML +=
+                        '<div style="background:white;border-radius:8px;padding:15px 20px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;gap:15px;">' +
+                        '<div style="background:#0f3460;color:white;width:35px;height:35px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">' +
+                        step.stepOrder + '</div>' +
+                        '<div>' +
+                        '<h4 style="color:#0f3460;font-size:14px;">' + step.stepName + '</h4>' +
+                        '<p style="color:#666;font-size:12px;">' + step.teamName + ' — ' + step.description + '</p>' +
+                        '</div></div>';
+                });
+            });
+        }
+
+        function ynBadge(value) {
+            if (!value) return '<span style="background:#f5f5f5;color:#666;padding:3px 8px;border-radius:4px;font-size:12px;">N/A</span>';
+            var v = value.toUpperCase();
+            if (v === 'Y') return '<span style="background:#e8f5e9;color:#2e7d32;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;">Y</span>';
+            if (v === 'N') return '<span style="background:#fce4ec;color:#c62828;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;">N</span>';
+            return '<span style="background:#f5f5f5;color:#666;padding:3px 8px;border-radius:4px;font-size:12px;">' + value + '</span>';
+        }
+
+        function filterTable(tableId, query) {
+            var rows = document
+                .getElementById(tableId)
+                .getElementsByTagName('tr');
+            for (var i = 1; i < rows.length; i++) {
+                var text = rows[i].textContent
+                    .toLowerCase();
+                rows[i].style.display =
+                    text.includes(query.toLowerCase())
+                    ? '' : 'none';
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

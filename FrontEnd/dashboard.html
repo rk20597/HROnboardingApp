@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" 
+          content="width=device-width, 
+          initial-scale=1.0">
+    <title>HR Onboarding — Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f6fa;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: #0f3460;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h2 {
+            color: white;
+            font-size: 18px;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .username-badge {
+            color: #86bc25;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-logout:hover {
+            background: white;
+            color: #0f3460;
+        }
+
+        /* TABS */
+        .tab-container {
+            background: white;
+            padding: 0 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tab-btn {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #0f3460;
+            border-bottom: 3px solid #0f3460;
+            font-weight: 600;
+        }
+
+        .tab-btn:hover {
+            color: #0f3460;
+        }
+
+        /* CONTENT */
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* TABLE */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px 
+                rgba(0,0,0,0.08);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .table-header h3 {
+            color: #0f3460;
+            font-size: 16px;
+        }
+
+        .search-box {
+            padding: 8px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            width: 200px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+        }
+
+        th:hover {
+            color: #0f3460;
+        }
+
+        td {
+            padding: 12px 15px;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-inactive {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .yn-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .yn-yes {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .yn-no {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .yn-na {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .loading-text {
+            text-align: center;
+            color: #666;
+            padding: 30px;
+            font-size: 14px;
+        }
+
+        .error-text {
+            text-align: center;
+            color: #c00;
+            padding: 30px;
+            font-size: 14px;
+        }
+
+        /* Onboarding Steps */
+        .step-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px 
+                rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .step-number {
+            background: #0f3460;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-info h4 {
+            color: #0f3460;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .step-info p {
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <h2>HR Onboarding System</h2>
+        <div class="navbar-right">
+            <span class="username-badge" 
+                id="usernameDisplay">
+            </span>
+            <button class="btn-logout" 
+                onclick="logout()">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" 
+                onclick="showTab('active')">
+                Active Candidates
+            </button>
+            <button class="tab-btn" 
+                onclick="showTab('offboarded')">
+                Offboarded
+            </button>
+            <button class="tab-btn" 
+                onclick="showTab('training')">
+                Training Status
+            </button>
+            <button class="tab-btn" 
+                onclick="showTab('onboarding')">
+                Onboarding Steps
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- ACTIVE CANDIDATES TAB -->
+        <div class="tab-content active" 
+             id="tab-active">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Active Candidates</h3>
+                    <input 
+                        class="search-box"
+                        type="text"
+                        placeholder="Search..."
+                        onkeyup="filterTable(
+                            'activeTable', this.value)">
+                </div>
+                <table id="activeTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(
+                                'activeTable', 0)">
+                                ID ↕
+                            </th>
+                            <th onclick="sortTable(
+                                'activeTable', 1)">
+                                Name ↕
+                            </th>
+                            <th>Email</th>
+                            <th onclick="sortTable(
+                                'activeTable', 3)">
+                                Role ↕
+                            </th>
+                            <th onclick="sortTable(
+                                'activeTable', 4)">
+                                Join Date ↕
+                            </th>
+                            <th>Team</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeBody">
+                        <tr>
+                            <td colspan="7" 
+                                class="loading-text">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- OFFBOARDED TAB -->
+        <div class="tab-content" 
+             id="tab-offboarded">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Offboarded Candidates</h3>
+                    <input 
+                        class="search-box"
+                        type="text"
+                        placeholder="Search..."
+                        onkeyup="filterTable(
+                            'offboardedTable', 
+                            this.value)">
+                </div>
+                <table id="offboardedTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th onclick="sortTable(
+                                'offboardedTable', 1)">
+                                Name ↕
+                            </th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th onclick="sortTable(
+                                'offboardedTable', 4)">
+                                Join Date ↕
+                            </th>
+                            <th>Team</th>
+                            <th onclick="sortTable(
+                                'offboardedTable', 6)">
+                                Offboard Date ↕
+                            </th>
+                            <th>Offboard Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="offboardedBody">
+                        <tr>
+                            <td colspan="8" 
+                                class="loading-text">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TRAINING STATUS TAB -->
+        <div class="tab-content" 
+             id="tab-training">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Training Status</h3>
+                    <input 
+                        class="search-box"
+                        type="text"
+                        placeholder="Search..."
+                        onkeyup="filterTable(
+                            'trainingTable', 
+                            this.value)">
+                </div>
+                <table id="trainingTable">
+                    <thead>
+                        <tr>
+                            <th>Candidate ID</th>
+                            <th>Datadog</th>
+                            <th>AKS Trained</th>
+                            <th>ROVO</th>
+                            <th>AI Fluency</th>
+                            <th>Claude 101</th>
+                            <th>Other Cert</th>
+                            <th>Co-Pilot</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trainingBody">
+                        <tr>
+                            <td colspan="8" 
+                                class="loading-text">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ONBOARDING STEPS TAB -->
+        <div class="tab-content" 
+             id="tab-onboarding">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Onboarding Steps</h3>
+                </div>
+                <div id="onboardingSteps">
+                    <p class="loading-text">
+                        Loading...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API = 'http://localhost:5289';
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        const username = localStorage.getItem('username');
+
+        // Redirect if not logged in
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
+        // Show username
+        document.getElementById('usernameDisplay')
+            .textContent = 'Welcome, ' + username;
+
+        // Load data on page load
+        loadActiveCandidates();
+
+        // TAB SWITCHING
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content')
+                .forEach(function(tab) {
+                    tab.classList.remove('active');
+                });
+            document.querySelectorAll('.tab-btn')
+                .forEach(function(btn) {
+                    btn.classList.remove('active');
+                });
+
+            document.getElementById(
+                'tab-' + tabName)
+                .classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'active') {
+                loadActiveCandidates();
+            } else if (tabName === 'offboarded') {
+                loadOffboardedCandidates();
+            } else if (tabName === 'training') {
+                loadTraining();
+            } else if (tabName === 'onboarding') {
+                loadOnboardingSteps();
+            }
+        }
+
+        // LOAD ACTIVE CANDIDATES
+        function loadActiveCandidates() {
+            fetch(API + '/api/candidates/active', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var tbody = document
+                    .getElementById('activeBody');
+                tbody.innerHTML = '';
+                data.forEach(function(c) {
+                    tbody.innerHTML += '<tr>' +
+                        '<td>' + c.candidateID + '</td>' +
+                        '<td>' + c.name + '</td>' +
+                        '<td>' + c.email + '</td>' +
+                        '<td>' + c.role + '</td>' +
+                        '<td>' + c.joinDate + '</td>' +
+                        '<td>' + c.team + '</td>' +
+                        '<td><span class="status-badge status-active">Active</span></td>' +
+                        '</tr>';
+                });
+            })
+            .catch(function(error) {
+                document.getElementById('activeBody')
+                    .innerHTML = '<tr><td colspan="7" class="error-text">Error loading data</td></tr>';
+            });
+        }
+
+        // LOAD OFFBOARDED CANDIDATES
+        function loadOffboardedCandidates() {
+            fetch(API + '/api/candidates/inactive', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var tbody = document
+                    .getElementById('offboardedBody');
+                tbody.innerHTML = '';
+                data.forEach(function(c) {
+                    tbody.innerHTML += '<tr>' +
+                        '<td>' + c.candidateID + '</td>' +
+                        '<td>' + c.name + '</td>' +
+                        '<td>' + c.email + '</td>' +
+                        '<td>' + c.role + '</td>' +
+                        '<td>' + c.joinDate + '</td>' +
+                        '<td>' + c.team + '</td>' +
+                        '<td>' + (c.offboardDate || 'N/A') + '</td>' +
+                        '<td>' + (c.offboardReason || 'N/A') + '</td>' +
+                        '</tr>';
+                });
+            })
+            .catch(function(error) {
+                document.getElementById('offboardedBody')
+                    .innerHTML = '<tr><td colspan="8" class="error-text">Error loading data</td></tr>';
+            });
+        }
+
+        // LOAD TRAINING
+        function loadTraining() {
+            fetch(API + '/api/training', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var tbody = document
+                    .getElementById('trainingBody');
+                tbody.innerHTML = '';
+                data.forEach(function(t) {
+                    tbody.innerHTML += '<tr>' +
+                        '<td>' + t.candidateID + '</td>' +
+                        '<td>' + ynBadge(t.datadog) + '</td>' +
+                        '<td>' + ynBadge(t.aksTrained) + '</td>' +
+                        '<td>' + ynBadge(t.rovo) + '</td>' +
+                        '<td>' + ynBadge(t.aiFluency) + '</td>' +
+                        '<td>' + ynBadge(t.claude101) + '</td>' +
+                        '<td>' + ynBadge(t.otherCertification) + '</td>' +
+                        '<td>' + ynBadge(t.coPilotTraining) + '</td>' +
+                        '</tr>';
+                });
+            })
+            .catch(function(error) {
+                document.getElementById('trainingBody')
+                    .innerHTML = '<tr><td colspan="8" class="error-text">Error loading data</td></tr>';
+            });
+        }
+
+        // LOAD ONBOARDING STEPS
+        function loadOnboardingSteps() {
+            fetch(API + '/api/onboarding/steps', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                var container = document
+                    .getElementById('onboardingSteps');
+                container.innerHTML = '';
+                data.sort(function(a, b) {
+                    return a.stepOrder - b.stepOrder;
+                });
+                data.forEach(function(step) {
+                    container.innerHTML +=
+                        '<div class="step-card">' +
+                        '<div class="step-number">' + 
+                            step.stepOrder + 
+                        '</div>' +
+                        '<div class="step-info">' +
+                        '<h4>' + step.stepName + '</h4>' +
+                        '<p>' + step.teamName + ' — ' + 
+                            step.description + '</p>' +
+                        '</div>' +
+                        '</div>';
+                });
+            })
+            .catch(function(error) {
+                document.getElementById('onboardingSteps')
+                    .innerHTML = '<p class="error-text">Error loading steps</p>';
+            });
+        }
+
+        // Y/N BADGE HELPER
+        function ynBadge(value) {
+            if (!value) return '<span class="yn-badge yn-na">N/A</span>';
+            var v = value.toUpperCase();
+            if (v === 'Y') return '<span class="yn-badge yn-yes">Y</span>';
+            if (v === 'N') return '<span class="yn-badge yn-no">N</span>';
+            return '<span class="yn-badge yn-na">' + value + '</span>';
+        }
+
+        // SEARCH FILTER
+        function filterTable(tableId, query) {
+            var rows = document
+                .getElementById(tableId)
+                .getElementsByTagName('tr');
+            for (var i = 1; i < rows.length; i++) {
+                var text = rows[i].textContent
+                    .toLowerCase();
+                rows[i].style.display = 
+                    text.includes(query.toLowerCase()) 
+                    ? '' : 'none';
+            }
+        }
+
+        // SORT TABLE
+        function sortTable(tableId, col) {
+            var table = document
+                .getElementById(tableId);
+            var rows = Array.from(
+                table.getElementsByTagName('tr'))
+                .slice(1);
+            var asc = table.getAttribute(
+                'data-sort') !== 'asc';
+            table.setAttribute('data-sort', 
+                asc ? 'asc' : 'desc');
+            rows.sort(function(a, b) {
+                var x = a.cells[col]
+                    .textContent.trim();
+                var y = b.cells[col]
+                    .textContent.trim();
+                return asc ? 
+                    x.localeCompare(y) : 
+                    y.localeCompare(x);
+            });
+            rows.forEach(function(row) {
+                table.getElementsByTagName('tbody')[0]
+                    .appendChild(row);
+            });
+        }
+
+        // LOGOUT
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
+
