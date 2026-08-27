@@ -1,45 +1,76 @@
 using HROnboarding.API.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens.Experimental;
 using System.Text;
 using OfficeOpenXml;
 
-ExcelPackage.License.SetNonCommercialPersonal("Rohan");
-
-var excelPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Data", "HRData.xlsx");
-Console.WriteLine($"Looking for excel at :{excelPath}");
-Console.WriteLine($"Fileexists:{File.Exists(excelPath)}");
+ExcelPackage.License.SetNonCommercialPersonal(
+    "TeamTracker");
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddSingleton<ExcelRepository>(new ExcelRepository(excelPath));
+// Register ExcelRepository for HRData
+var hrDataPath = Path.Combine(
+    Directory.GetCurrentDirectory(),
+    "..", "..", "Data", "HRData.xlsx");
+Console.WriteLine($"HRData path: {hrDataPath}");
+Console.WriteLine($"HRData exists: {File.Exists(hrDataPath)}");
 
-builder.Services.AddCors(options => options.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+builder.Services.AddSingleton<ExcelRepository>(
+    new ExcelRepository(hrDataPath));
 
-builder.Services.AddAuthentication(
-    JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+// Register TeamTrackerRepository
+var teamTrackerPath = Path.Combine(
+    Directory.GetCurrentDirectory(),
+    "..", "..", "Data", "TeamTracker.xlsx");
+Console.WriteLine($"TeamTracker path: {teamTrackerPath}");
+Console.WriteLine($"TeamTracker exists: {File.Exists(teamTrackerPath)}");
 
-    options => options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddSingleton<TeamTrackerRepository>(
+    new TeamTrackerRepository(teamTrackerPath));
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"],
-        ValidAudience = builder.Configuration["JWT:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-         builder.Configuration["JWT:Key"] ?? ""))
-    
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Add JWT Authentication
+builder.Services.AddAuthentication(
+    JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder
+                    .Configuration["Jwt:Issuer"],
+                ValidAudience = builder
+                    .Configuration["Jwt:Audience"],
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            builder.Configuration[
+                                "Jwt:Key"] ?? ""))
+            };
     });
 
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
-if(app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
@@ -49,5 +80,8 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.Run();

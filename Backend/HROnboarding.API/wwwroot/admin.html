@@ -593,7 +593,7 @@ function safe(val) {
 }
 
 function loadActiveMembers() {
-    apiGet('/api/teammembers/active')
+    apiGet('/api/teammember/active')
     .then(function(data) {
         var tbody = document.getElementById('activeBody');
         tbody.innerHTML = '';
@@ -630,7 +630,7 @@ function loadActiveMembers() {
 }
 
 function loadInactiveMembers() {
-    apiGet('/api/teammembers/inactive')
+    apiGet('/api/teammember/inactive')
     .then(function(data) {
         var tbody = document.getElementById('inactiveBody');
         tbody.innerHTML = '';

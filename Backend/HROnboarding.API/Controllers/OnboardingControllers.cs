@@ -5,16 +5,17 @@ using Microsoft.AspNetCore.Authorization;
 namespace HROnboarding.API.Controllers
 {
     [ApiController]
-    [Route("api/controller")]
+    [Route("api/[controller]")]
     [Authorize]
-    public class OnboardingControllers : ControllerBase
+    public class OnboardingController : ControllerBase
     {
-        private readonly ExcelRepository _repo;
+        private readonly TeamTrackerRepository _repo;
 
-        public OnboardingControllers(ExcelRepository repo) 
+        public OnboardingController(TeamTrackerRepository repo) 
         { 
             _repo = repo;
         }
+
 
         [HttpGet("steps")]
         public async Task<IActionResult> GetSteps() 
