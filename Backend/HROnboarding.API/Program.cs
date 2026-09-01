@@ -11,27 +11,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-// Register ExcelRepository for HRData
-var hrDataPath = Path.Combine(
-    Directory.GetCurrentDirectory(),
-    "..", "..", "Data", "HRData.xlsx");
-Console.WriteLine($"HRData path: {hrDataPath}");
-Console.WriteLine($"HRData exists: {File.Exists(hrDataPath)}");
-
-builder.Services.AddSingleton<ExcelRepository>(
-    new ExcelRepository(hrDataPath));
-
-// Register TeamTrackerRepository
-var teamTrackerPath = Path.Combine(
+var dataPath = Path.Combine(
     Directory.GetCurrentDirectory(),
     "..", "..", "Data", "TeamTracker.xlsx");
-Console.WriteLine($"TeamTracker path: {teamTrackerPath}");
-Console.WriteLine($"TeamTracker exists: {File.Exists(teamTrackerPath)}");
+
+Console.WriteLine($"TeamTracker path: {dataPath}");
+Console.WriteLine($"TeamTracker exists: {File.Exists(dataPath)}");
+
+builder.Services.AddSingleton<ExcelRepository>(
+    new ExcelRepository(dataPath));
 
 builder.Services.AddSingleton<TeamTrackerRepository>(
-    new TeamTrackerRepository(teamTrackerPath));
+    new TeamTrackerRepository(dataPath));
 
-// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -42,7 +34,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add JWT Authentication
 builder.Services.AddAuthentication(
     JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -79,9 +70,8 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
-
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.MapControllers();
 
 app.Run();

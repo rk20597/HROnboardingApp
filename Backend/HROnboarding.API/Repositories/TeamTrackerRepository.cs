@@ -1,5 +1,6 @@
 ﻿using OfficeOpenXml;
 using HROnboarding.API.Models;
+using System.Security.Cryptography.X509Certificates;
 
 namespace HROnboarding.API.Repositories
 {
@@ -163,6 +164,47 @@ namespace HROnboarding.API.Repositories
                 m.Status?.ToLower() == "inactive")
                 .ToList();
         }
+
+        public async Task DeleteTeamMember(int srNo)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "TeamMember")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    if (id == srNo)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
 
         // ==================
         // ONBOARDING STEPS
@@ -406,6 +448,52 @@ namespace HROnboarding.API.Repositories
             }
         }
 
+        // DELETE ONBOARDING PROGRESS
+        public async Task DeleteProgress(
+            int candidateId, int stepId)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "OnboardingProcess")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var candId = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    var stId = Convert.ToInt32(
+                        sheet.Cells[row, 2].Value ?? 0);
+                    if (candId == candidateId &&
+                        stId == stepId)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+
 
         // ==================
         // TRAINING LINKS
@@ -558,6 +646,92 @@ namespace HROnboarding.API.Repositories
             }
         }
 
+        // DELETE TRAINING LINK (Topic/Link format)
+        public async Task DeleteTrainingLink(
+            string sheetName, string topic)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == sheetName)
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var t = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    if (t == topic)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // DELETE TRAINING COURSE (Platform/Title format)
+        public async Task DeleteTrainingCourse(
+            string sheetName, string title)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == sheetName)
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var t = sheet.Cells[row, 2]
+                        .Value?.ToString();
+                    if (t == title)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+
+
         // ==================
         // PROJECTS
         // ==================
@@ -631,6 +805,48 @@ namespace HROnboarding.API.Repositories
             }
         }
 
+        // DELETE PROJECT
+        public async Task DeleteProject(string projectName)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim().Contains("Project"))
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var name = sheet.Cells[row, 2]
+                        .Value?.ToString();
+                    if (name == projectName)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+
         // ==================
         // GD LEAD
         // ==================
@@ -688,6 +904,48 @@ namespace HROnboarding.API.Repositories
                 _lock.Release();
             }
         }
+
+        // DELETE GD LEAD
+        public async Task DeleteGDLead(string skillSet)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "GDLead")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var skill = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    if (skill == skillSet)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
 
         // ==================
         // RAW SHEET DATA
@@ -749,5 +1007,783 @@ namespace HROnboarding.API.Repositories
                 _lock.Release();
             }
         }
+
+        // GET TRAINING STATUS
+        public async Task<List<TrainingStatus>> GetTrainingStatus()
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                var list = new List<TrainingStatus>();
+                using var package = new ExcelPackage(new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook.Worksheets)
+                {
+                    if (ws.Name.Trim() == "Training Status")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return list;
+
+                for (int row = 2; row <= sheet.Dimension.End.Row; row++)
+                {
+                    var domain = sheet.Cells[row, 3].Value?.ToString();
+                    if (string.IsNullOrEmpty(domain))
+                        continue;
+
+                    list.Add(new TrainingStatus
+                    {
+                        TrainingID = Convert.ToInt32(sheet.Cells[row, 1].Value ?? 0),
+                        CandidateID = Convert.ToInt32(sheet.Cells[row, 2].Value ?? 0),
+                        Domain = domain,
+                        Status = sheet.Cells[row, 4].Value?.ToString(),
+                        DueDate = sheet.Cells[row, 5].Value?.ToString(),
+                        CompletedDate = sheet.Cells[row, 6]?.ToString(),
+                    });
+                }
+                return list;
+            }
+            finally
+            { 
+                _lock.Release();
+            }  
+       
+        }
+
+        // ADD TRAINING STATUS
+        public async Task AddTrainingStatus(TrainingStatus training)
+        { 
+            await _lock.WaitAsync();
+            try
+            { 
+                using var package = new ExcelPackage(new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook.Worksheets)
+                {
+                    if (ws.Name.Trim() == "Training Status")
+                    { 
+                        sheet = ws; 
+                        break;
+                    }
+                }
+
+                if (sheet != null) return;
+
+                int newRow = sheet.Dimension.End.Row + 1;
+                sheet.Cells[newRow, 1].Value = newRow - 1;
+                sheet.Cells[newRow, 2].Value = training.CandidateID;
+                sheet.Cells[newRow, 3].Value = training.Domain;
+                sheet.Cells[newRow, 4].Value = training.Status;
+                sheet.Cells[newRow, 5].Value = training.DueDate;
+                sheet.Cells[newRow, 6].Value = training.CompletedDate;
+
+                await package.SaveAsync();
+            }
+            finally { _lock.Release(); }
+        }
+
+        //UPDATE TRAINING STATUS
+        public async Task UpdateTrainingStatus(TrainingStatus training)
+        {
+            await _lock.WaitAsync();
+
+            try
+            {
+                using var package = new ExcelPackage(new FileInfo(_filePath));
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook.Worksheets)
+                {
+                    if (ws.Name.Trim() == "Training Status")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+                if(sheet != null) return;
+
+                for (int row = 2; row <= sheet.Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(sheet.Cells[row, 1].Value ?? 0);
+                    if (id == training.TrainingID) 
+                    {
+                        sheet.Cells[row, 3].Value = training.Domain;
+                        sheet.Cells[row, 4].Value = training.Status;
+                        sheet.Cells[row, 5].Value =training.DueDate;
+                        sheet.Cells[row, 6].Value = training.CompletedDate;
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            { 
+                _lock.Release();
+            }
+        }
+
+        // DELETE TRAINING STATUS
+        public async Task DeleteTrainingStatus(int trainingId)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Training Status")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    if (id == trainingId)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+
+        // GET OFFBOARDED
+        public async Task<List<Offboarded>>
+            GetOffboarded()
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                var list = new List<Offboarded>();
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Offboarding")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return list;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var name = sheet.Cells[row, 2]
+                        .Value?.ToString();
+                    if (string.IsNullOrEmpty(name))
+                        continue;
+                    list.Add(new Offboarded
+                    {
+                        CandidateID = Convert.ToInt32(
+                            sheet.Cells[row, 1].Value ?? 0),
+                        Name = name,
+                        Email = sheet.Cells[row, 3]
+                            .Value?.ToString(),
+                        Role = sheet.Cells[row, 4]
+                            .Value?.ToString(),
+                        Reason = sheet.Cells[row, 5]
+                            .Value?.ToString()
+                    });
+                }
+                return list;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // ADD OFFBOARDED
+        public async Task AddOffboarded(Offboarded member)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Offboarding")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                int newRow = sheet.Dimension.End.Row + 1;
+                sheet.Cells[newRow, 1].Value =
+                    member.CandidateID;
+                sheet.Cells[newRow, 2].Value = member.Name;
+                sheet.Cells[newRow, 3].Value = member.Email;
+                sheet.Cells[newRow, 4].Value = member.Role;
+                sheet.Cells[newRow, 5].Value = member.Reason;
+
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // GET ONBOARDING STEPS BY TEAM
+        public async Task<List<OnboardingStep>>
+            GetOnboardingStepsByTeam(string teamName)
+        {
+            var all = await GetOnboardingSteps();
+            if (string.IsNullOrEmpty(teamName))
+                return all;
+            return all.Where(s =>
+                s.TeamName == teamName).ToList();
+        }
+
+        // GET PROGRESS BY CANDIDATE
+        public async Task<List<OnboardingProgress>>
+            GetProgressByCandidate(int candidateId)
+        {
+            var all = await GetOnboardingProgress();
+            return all.Where(p =>
+                p.CandidateID == candidateId).ToList();
+        }
+
+        // UPDATE PROGRESS
+        public async Task UpdateProgress(
+            OnboardingProgress progress)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "OnboardingProcess")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var candId = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    var stepId = Convert.ToInt32(
+                        sheet.Cells[row, 2].Value ?? 0);
+                    if (candId == progress.CandidateID &&
+                        stepId == progress.StepID)
+                    {
+                        sheet.Cells[row, 3].Value =
+                            progress.Status;
+                        sheet.Cells[row, 4].Value =
+                            progress.CompletedDate;
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+
+        }
+
+        // DELETE OFFBOARDED
+        public async Task DeleteOffboarded(int candidateId)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Offboarding")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    if (id == candidateId)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // GET ALL USERS
+        public async Task<List<User>> GetAllUsers()
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                var users = new List<User>();
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Users")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return users;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var username = sheet.Cells[row, 2]
+                        .Value?.ToString();
+                    if (string.IsNullOrEmpty(username))
+                        continue;
+                    users.Add(new User
+                    {
+                        UserID = Convert.ToInt32(
+                            sheet.Cells[row, 1].Value ?? 0),
+                        UserName = username,
+                        PasswordHash = sheet.Cells[row, 3]
+                            .Value?.ToString(),
+                        Role = sheet.Cells[row, 4]
+                            .Value?.ToString(),
+                        IsActive = sheet.Cells[row, 5]
+                            .Value?.ToString()
+                            ?.ToLower() == "true"
+                    });
+                }
+                return users;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // ADD USER
+        public async Task AddUser(User user)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Users")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                int newRow = sheet.Dimension.End.Row + 1;
+                sheet.Cells[newRow, 1].Value = newRow - 1;
+                sheet.Cells[newRow, 2].Value = user.UserName;
+                sheet.Cells[newRow, 3].Value =
+                    user.PasswordHash;
+                sheet.Cells[newRow, 4].Value = user.Role;
+                sheet.Cells[newRow, 5].Value =
+                    user.IsActive ? "TRUE" : "FALSE";
+
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // UPDATE USER
+        public async Task UpdateUser(User user)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Users")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    if (id == user.UserID)
+                    {
+                        sheet.Cells[row, 2].Value =
+                            user.UserName;
+                        sheet.Cells[row, 3].Value =
+                            user.PasswordHash;
+                        sheet.Cells[row, 4].Value =
+                            user.Role;
+                        sheet.Cells[row, 5].Value =
+                            user.IsActive ? "TRUE" : "FALSE";
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        // DELETE USER
+        public async Task DeleteUser(int userId)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "Users")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    if (id == userId)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task<List<PRSD>> GetPRSD()
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                var list = new List<PRSD>();
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "PRSD")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return list;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var lob = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    if (string.IsNullOrEmpty(lob))
+                        continue;
+                    list.Add(new PRSD
+                    {
+                        LOB = lob,
+                        TrackName = sheet.Cells[row, 2]
+                            .Value?.ToString(),
+                        ProdSupportApplicable = sheet
+                            .Cells[row, 3].Value?.ToString(),
+                        ProdSupport = sheet.Cells[row, 4]
+                            .Value?.ToString(),
+                        ProdSupportConfidenceLevel = sheet
+                            .Cells[row, 5].Value?.ToString(),
+                        ProdSupportETA = sheet.Cells[row, 6]
+                            .Value?.ToString(),
+                        ProdSupportChallenges = sheet
+                            .Cells[row, 7].Value?.ToString(),
+                        TotalProdSupportCount = sheet
+                            .Cells[row, 8].Value?.ToString(),
+                        TentetiveETA = sheet.Cells[row, 9]
+                            .Value?.ToString(),
+                        ResourceName = sheet.Cells[row, 10]
+                            .Value?.ToString(),
+                        ContactNumber = sheet.Cells[row, 11]
+                            .Value?.ToString(),
+                        ReleaseSupportApplicable = sheet
+                            .Cells[row, 12].Value?.ToString(),
+                        ReleaseSupport = sheet.Cells[row, 13]
+                            .Value?.ToString(),
+                        TotalReleaseSupport = sheet
+                            .Cells[row, 14].Value?.ToString()
+                    });
+                }
+                return list;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task AddPRSD(PRSD prsd)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "PRSD")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                int newRow = sheet.Dimension.End.Row + 1;
+                sheet.Cells[newRow, 1].Value = prsd.LOB;
+                sheet.Cells[newRow, 2].Value = prsd.TrackName;
+                sheet.Cells[newRow, 3].Value =
+                    prsd.ProdSupportApplicable;
+                sheet.Cells[newRow, 4].Value =
+                    prsd.ProdSupport;
+                sheet.Cells[newRow, 5].Value =
+                    prsd.ProdSupportConfidenceLevel;
+                sheet.Cells[newRow, 6].Value =
+                    prsd.ProdSupportETA;
+                sheet.Cells[newRow, 7].Value =
+                    prsd.ProdSupportChallenges;
+                sheet.Cells[newRow, 8].Value =
+                    prsd.TotalProdSupportCount;
+                sheet.Cells[newRow, 9].Value =
+                    prsd.TentetiveETA;
+                sheet.Cells[newRow, 10].Value =
+                    prsd.ResourceName;
+                sheet.Cells[newRow, 11].Value =
+                    prsd.ContactNumber;
+                sheet.Cells[newRow, 12].Value =
+                    prsd.ReleaseSupportApplicable;
+                sheet.Cells[newRow, 13].Value =
+                    prsd.ReleaseSupport;
+                sheet.Cells[newRow, 14].Value =
+                    prsd.TotalReleaseSupport;
+
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task UpdatePRSD(PRSD prsd)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "PRSD")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var lob = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    var track = sheet.Cells[row, 2]
+                        .Value?.ToString();
+                    if (lob == prsd.LOB &&
+                        track == prsd.TrackName)
+                    {
+                        sheet.Cells[row, 3].Value =
+                            prsd.ProdSupportApplicable;
+                        sheet.Cells[row, 4].Value =
+                            prsd.ProdSupport;
+                        sheet.Cells[row, 5].Value =
+                            prsd.ProdSupportConfidenceLevel;
+                        sheet.Cells[row, 6].Value =
+                            prsd.ProdSupportETA;
+                        sheet.Cells[row, 7].Value =
+                            prsd.ProdSupportChallenges;
+                        sheet.Cells[row, 8].Value =
+                            prsd.TotalProdSupportCount;
+                        sheet.Cells[row, 9].Value =
+                            prsd.TentetiveETA;
+                        sheet.Cells[row, 10].Value =
+                            prsd.ResourceName;
+                        sheet.Cells[row, 11].Value =
+                            prsd.ContactNumber;
+                        sheet.Cells[row, 12].Value =
+                            prsd.ReleaseSupportApplicable;
+                        sheet.Cells[row, 13].Value =
+                            prsd.ReleaseSupport;
+                        sheet.Cells[row, 14].Value =
+                            prsd.TotalReleaseSupport;
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task DeletePRSD(
+            string lob, string trackName)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "PRSD")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var l = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    var t = sheet.Cells[row, 2]
+                        .Value?.ToString();
+                    if (l == lob && t == trackName)
+                    {
+                        sheet.DeleteRow(row);
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+
+
+
     }
 }

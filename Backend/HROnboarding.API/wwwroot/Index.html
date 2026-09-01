@@ -140,7 +140,7 @@
 <body>
     <div class="login-container">
         <div class="logo-section">
-            <h1>HR Onboarding System</h1>
+            <h1>Team Tracker</h1>
             <p>Please sign in to continue</p>
         </div>
         <div class="deloitte-bar"></div>
@@ -254,11 +254,8 @@ function login() {
         localStorage.setItem('role', data.role);
         localStorage.setItem('username', data.username);
 
-        if (data.role === 'Admin') {
-            window.location.href = 'admin.html';
-        } else {
-            window.location.href = 'dashboard.html';
-        }
+        window.location.href = 'dashboard.html';
+
     })
     .catch(function(error) {
         showError('Invalid username or password');

@@ -26,8 +26,16 @@ namespace HROnboarding.API.Controllers
         public async Task<IActionResult> Login(
             [FromBody] LoginRequest request)
         {
+            Console.WriteLine("Login attempt:" + request.Username);
             var user = await _repo
                 .GetUserByUsername(request.Username ?? "");
+            Console.WriteLine("User Found" + (user != null ? "Yes" : "No"));
+            if (user != null) 
+            {
+                Console.WriteLine("DB Password:" + user.PasswordHash);
+                Console.WriteLine("Input Password:" + request.Password);
+                Console.WriteLine("IsActive:" + user.IsActive);
+            }
 
             if (user == null)
                 return Unauthorized(new

@@ -42,25 +42,34 @@ namespace HROnboarding.API.Controllers
             return Ok(members);
         }
 
-        [HttpGet("debug")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Debug()
+        [HttpDelete("{srNo}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int srNo)
         {
-            try
-            {
-                var all = await _repo.GetAllMembers();
-                return Ok(new
-                {
-                    totalCount = all.Count,
-                    activeCount = all.Count(m =>
-                        m.Status?.ToLower() == "active"),
-                    firstMember = all.FirstOrDefault()
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new { error = ex.Message });
-            }
+            await _repo.DeleteTeamMember(srNo);
+            return Ok(new { message = "Member deleted" });
         }
+
+
+        //[HttpGet("debug")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> Debug()
+        //{
+        //    try
+        //    {
+        //        var all = await _repo.GetAllMembers();
+        //        return Ok(new
+        //        {
+        //            totalCount = all.Count,
+        //            activeCount = all.Count(m =>
+        //                m.Status?.ToLower() == "active"),
+        //            firstMember = all.FirstOrDefault()
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Ok(new { error = ex.Message });
+        //    }
+        //}
     }
 }

@@ -277,13 +277,15 @@
 <!-- TABS -->
 <div class="tab-container">
     <button class="tab-btn active" onclick="showTab('active', event)">Active Members</button>
-    <button class="tab-btn" onclick="showTab('inactive', event)">Offboarded</button>
+    <button class="tab-btn" onclick="showTab('inactive', event)">Inactive</button>
     <button class="tab-btn" onclick="showTab('projects', event)">Projects</button>
     <button class="tab-btn" onclick="showTab('mandatory', event)">Mandatory Trainings</button>
     <button class="tab-btn" onclick="showTab('gdlead', event)">GD Lead Status</button>
     <button class="tab-btn" onclick="showTab('demography', event)">Team Demography</button>
     <button class="tab-btn" onclick="showTab('activeinactive', event)">Active-Inactive TMs</button>
     <button class="tab-btn" onclick="showTab('onboarding', event)">Onboarding Steps</button>
+    <button class="tab-btn" onclick="showTab('offboarded', event)">Offboarded</button>
+    <button class="tab-btn" onclick="showTab('offboarded', event)">Users</button>
 </div>
 
 <!-- CONTENT -->
@@ -294,7 +296,15 @@
         <div class="card">
             <div class="card-header">
                 <h3>Active Team Members</h3>
-                <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('activeTable', this.value)">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <select id="filterJobFamily" onchange="applyFilters()" style="padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
+                        <option value="">All Job Families</option>
+                    </select>
+                    <select id="filterLocation" onchange="applyFilters()" style="padding:6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
+                        <option value="">All Locations</option>
+                    </select>
+                    <input class="search-box" type="text" id="activeSearch" placeholder="Search..." onkeyup="applyFilters()">
+                </div>
             </div>
             <div class="table-wrapper">
                 <table id="activeTable">
@@ -303,35 +313,47 @@
                             <th onclick="sortTable('activeTable',0)">Sr# ↕</th>
                             <th onclick="sortTable('activeTable',1)">Name ↕</th>
                             <th>Email</th>
-                            <th onclick="sortTable('activeTable',3)">Location ↕</th>
-                            <th onclick="sortTable('activeTable',4)">City ↕</th>
+                            <th>Location</th>
+                            <th>City</th>
                             <th onclick="sortTable('activeTable',5)">Job Family ↕</th>
+                            <th>Level Original</th>
                             <th>Level</th>
+                            <th>Client Level</th>
                             <th>Project</th>
                             <th>GD Lead 1</th>
+                            <th>GD Lead 2</th>
+                            <th>GD Lead 3</th>
                             <th>Onboarding Date</th>
                             <th>Joined</th>
+                            <th>Client KT</th>
+                            <th>Tool Access</th>
                             <th>Datadog</th>
                             <th>AKS</th>
                             <th>ROVO</th>
+                            <th>Claude Code</th>
+                            <th>AI Fluency</th>
+                            <th>Claude 101</th>
+                            <th>Other AI</th>
                             <th>CoPilot</th>
+                            <th>Compliance</th>
                             <th>SciForma</th>
+                            <th>Mobile</th>
                             <th>Comments</th>
                         </tr>
                     </thead>
                     <tbody id="activeBody">
-                        <tr><td colspan="17" class="loading">Loading...</td></tr>
+                        <tr><td colspan="29" class="loading">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- OFFBOARDED -->
+    <!-- INACTIVE -->
     <div class="tab-content" id="tab-inactive">
         <div class="card">
             <div class="card-header">
-                <h3>Offboarded Members</h3>
+                <h3>Inactive Members</h3>
                 <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('inactiveTable', this.value)">
             </div>
             <div class="table-wrapper">
@@ -345,13 +367,14 @@
                             <th>Job Family</th>
                             <th>Level</th>
                             <th>Project</th>
+                            <th>Onboarding Date</th>
                             <th>Offboarding Date</th>
                             <th>Comments</th>
                             <th>Replacement</th>
                         </tr>
                     </thead>
                     <tbody id="inactiveBody">
-                        <tr><td colspan="10" class="loading">Loading...</td></tr>
+                        <tr><td colspan="11" class="loading">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -376,8 +399,8 @@
                             <th>Deloitte Team Lead</th>
                             <th>USA Team?</th>
                             <th>ADMX Team?</th>
-                            <th>Scrum Master (Offshore)</th>
-                            <th>Scrum Master (Onshore)</th>
+                            <th>Scrum Master Offshore</th>
+                            <th>Scrum Master Onshore</th>
                             <th>Meeting Cadence</th>
                         </tr>
                     </thead>
@@ -393,7 +416,7 @@
     <div class="tab-content" id="tab-mandatory">
         <div class="card">
             <div class="card-header">
-                <h3>Mandatory Trainings by Job Family</h3>
+                <h3>Mandatory Trainings</h3>
                 <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('mandatoryTable', this.value)">
             </div>
             <div class="table-wrapper">
@@ -485,6 +508,7 @@
     </div>
 
 </div>
+
 
 <!-- ADD/EDIT STEP MODAL -->
 <div class="modal-overlay" id="stepModal">
@@ -592,40 +616,109 @@ function safe(val) {
     return val || '';
 }
 
+var allActiveMembers = [];
+
 function loadActiveMembers() {
     apiGet('/api/teammember/active')
     .then(function(data) {
-        var tbody = document.getElementById('activeBody');
-        tbody.innerHTML = '';
-        if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="17" class="loading">No active members found</td></tr>';
-            return;
-        }
-        data.forEach(function(m) {
-            tbody.innerHTML += '<tr>' +
-                '<td>' + safe(m.srNo) + '</td>' +
-                '<td>' + safe(m.name) + '</td>' +
-                '<td>' + safe(m.email) + '</td>' +
-                '<td>' + safe(m.location) + '</td>' +
-                '<td>' + safe(m.city) + '</td>' +
-                '<td>' + safe(m.jobFamily) + '</td>' +
-                '<td>' + safe(m.level) + '</td>' +
-                '<td>' + safe(m.project) + '</td>' +
-                '<td>' + safe(m.gdLeader1) + '</td>' +
-                '<td>' + safe(m.onboardingDate) + '</td>' +
-                '<td>' + safe(m.joined) + '</td>' +
-                '<td>' + yn(m.datadog) + '</td>' +
-                '<td>' + yn(m.aksTrained) + '</td>' +
-                '<td>' + yn(m.rovo) + '</td>' +
-                '<td>' + yn(m.coPilotTrained) + '</td>' +
-                '<td>' + safe(m.sciFormaAccess) + '</td>' +
-                '<td>' + safe(m.comments) + '</td>' +
-                '</tr>';
-        });
+        allActiveMembers = data;
+        populateFilters(data);
+        renderActiveTable(data);
     })
     .catch(function() {
-        document.getElementById('activeBody').innerHTML =
-            '<tr><td colspan="17" class="error-text">Error loading data</td></tr>';
+        document.getElementById('activeBody')
+            .innerHTML = '<tr><td colspan="28" class="error-text">Error loading data</td></tr>';
+    });
+}
+
+function populateFilters(data) {
+    var jobFamilies = [...new Set(data
+        .map(function(m) { return m.jobFamily; })
+        .filter(Boolean))].sort();
+    
+    var locations = [...new Set(data
+        .map(function(m) { return m.location; })
+        .filter(Boolean))].sort();
+
+    var jfSelect = document
+        .getElementById('filterJobFamily');
+    jobFamilies.forEach(function(jf) {
+        jfSelect.innerHTML += 
+            '<option value="' + jf + '">' + 
+            jf + '</option>';
+    });
+
+    var locSelect = document
+        .getElementById('filterLocation');
+    locations.forEach(function(loc) {
+        locSelect.innerHTML += 
+            '<option value="' + loc + '">' + 
+            loc + '</option>';
+    });
+}
+
+function applyFilters() {
+    var jf = document
+        .getElementById('filterJobFamily').value;
+    var loc = document
+        .getElementById('filterLocation').value;
+    var search = document
+        .getElementById('activeSearch')
+        .value.toLowerCase();
+
+    var filtered = allActiveMembers.filter(
+        function(m) {
+            var matchJF = !jf || m.jobFamily === jf;
+            var matchLoc = !loc || m.location === loc;
+            var matchSearch = !search || 
+                JSON.stringify(m).toLowerCase()
+                .includes(search);
+            return matchJF && matchLoc && matchSearch;
+        });
+
+    renderActiveTable(filtered);
+}
+
+function renderActiveTable(data) {
+    var tbody = document
+        .getElementById('activeBody');
+    tbody.innerHTML = '';
+    if (!data.length) {
+        tbody.innerHTML = 
+            '<tr><td colspan="28" class="loading">No members found</td></tr>';
+        return;
+    }
+    data.forEach(function(m) {
+        tbody.innerHTML += '<tr>' +
+            '<td>' + safe(m.srNo) + '</td>' +
+            '<td>' + safe(m.name) + '</td>' +
+            '<td>' + safe(m.email) + '</td>' +
+            '<td>' + safe(m.location) + '</td>' +
+            '<td>' + safe(m.city) + '</td>' +
+            '<td>' + safe(m.jobFamily) + '</td>' +
+            '<td>' + safe(m.level) + '</td>' +
+            '<td>' + safe(m.clientLevel) + '</td>' +
+            '<td>' + safe(m.project) + '</td>' +
+            '<td>' + safe(m.gdLeader1) + '</td>' +
+            '<td>' + safe(m.gdLeader2) + '</td>' +
+            '<td>' + safe(m.gdLeader3) + '</td>' +
+            '<td>' + safe(m.onboardingDate) + '</td>' +
+            '<td>' + safe(m.joined) + '</td>' +
+            '<td>' + safe(m.clientKT) + '</td>' +
+            '<td>' + safe(m.toolAccess) + '</td>' +
+            '<td>' + yn(m.datadog) + '</td>' +
+            '<td>' + yn(m.aksTrained) + '</td>' +
+            '<td>' + yn(m.rovo) + '</td>' +
+            '<td>' + yn(m.claudeCodeDevDay) + '</td>' +
+            '<td>' + yn(m.aiFluency) + '</td>' +
+            '<td>' + yn(m.claude101) + '</td>' +
+            '<td>' + yn(m.otherAICertification) + '</td>' +
+            '<td>' + yn(m.coPilotTrained) + '</td>' +
+            '<td>' + yn(m.clientComplianceTrainings) + '</td>' +
+            '<td>' + safe(m.sciFormaAccess) + '</td>' +
+            '<td>' + safe(m.mobileNumber) + '</td>' +
+            '<td>' + safe(m.comments) + '</td>' +
+            '</tr>';
     });
 }
 
@@ -635,7 +728,7 @@ function loadInactiveMembers() {
         var tbody = document.getElementById('inactiveBody');
         tbody.innerHTML = '';
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="10" class="loading">No offboarded members found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="loading">No inactive members found</td></tr>';
             return;
         }
         data.forEach(function(m) {
@@ -693,8 +786,8 @@ function loadMandatory() {
         data.forEach(function(t) {
             tbody.innerHTML += '<tr>' +
                 '<td>' + safe(t.jobFamily) + '</td>' +
-                '<td>' + safe(t.mandatoryTrainings) + '</td>' +
-                '<td>' + safe(t.pOC) + '</td>' +
+                '<td>' + safe(t.mandatoryTraining) + '</td>' +
+                '<td>' + safe(t.poc) + '</td>' +
                 '</tr>';
         });
     })

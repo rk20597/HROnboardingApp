@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Tracker — Dashboard</title>
+    <title>Team Tracker</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Segoe UI', sans-serif; background:#f5f6fa; }
@@ -18,16 +18,17 @@
             z-index: 100;
         }
         .navbar h2 { color: white; font-size: 16px; }
-        .navbar-right { display: flex; gap: 15px; align-items: center; }
+        .navbar-right { display: flex; gap: 10px; align-items: center; }
         .username-badge { color: #86bc25; font-weight: 600; font-size: 13px; }
         .role-badge {
-            background: #555;
-            color: white;
             padding: 3px 10px;
             border-radius: 12px;
             font-size: 11px;
             font-weight: 600;
+            color: white;
         }
+        .role-admin { background: #86bc25; }
+        .role-user { background: #555; }
         .btn-logout {
             background: transparent;
             color: white;
@@ -42,6 +43,8 @@
             background: white;
             padding: 0 25px;
             border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+            white-space: nowrap;
         }
         .tab-btn {
             display: inline-block;
@@ -52,9 +55,46 @@
             font-size: 13px;
             color: #666;
             border-bottom: 3px solid transparent;
-            transition: all 0.2s;
         }
         .tab-btn.active { color: #0f3460; border-bottom: 3px solid #0f3460; font-weight: 600; }
+        .tab-btn:hover { color: #0f3460; }
+        .dropdown-container { display: inline-block; position: relative; }
+        .dropdown-btn {
+            display: inline-block;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        .dropdown-btn:hover { color: #0f3460; }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 200;
+            min-width: 180px;
+        }
+        .dropdown-container:hover .dropdown-menu { display: block; }
+        .dropdown-item {
+            display: block;
+            padding: 10px 15px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+        .dropdown-item:hover { background: #f5f6fa; color: #0f3460; }
         .content { padding: 20px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -63,6 +103,7 @@
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
         }
         .card-header {
             display: flex;
@@ -73,74 +114,101 @@
             gap: 10px;
         }
         .card-header h3 { color: #0f3460; font-size: 15px; }
-        .domain-select {
-            padding: 8px 15px;
-            border: 2px solid #0f3460;
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .search-box {
+            padding: 7px 12px;
+            border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 13px;
+            font-size: 12px;
             outline: none;
+            width: 180px;
+        }
+        .filter-select {
+            padding: 7px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 12px;
+            outline: none;
+        }
+        .btn-add {
+            background: #86bc25;
+            color: white;
+            border: none;
+            padding: 7px 15px;
+            border-radius: 5px;
             cursor: pointer;
-            min-width: 200px;
+            font-size: 12px;
+            font-weight: 600;
         }
-        .training-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .training-card {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            border-left: 4px solid #0f3460;
-        }
-        .training-card h4 { color: #0f3460; font-size: 13px; margin-bottom: 5px; }
-        .training-card .platform {
+        .btn-edit {
             background: #0f3460;
             color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            display: inline-block;
-            margin-bottom: 6px;
-        }
-        .training-card .est-time {
-            color: #86bc25;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
             font-size: 11px;
-            font-weight: 600;
+            margin-right: 3px;
         }
-        .training-card .remark {
-            color: #888;
+        .btn-delete {
+            background: #c62828;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
             font-size: 11px;
-            margin-top: 3px;
         }
-        .training-card a {
-            display: inline-block;
-            margin-top: 8px;
-            color: #0f3460;
-            font-size: 12px;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .training-card a:hover { text-decoration: underline; }
-        .link-list { list-style: none; }
-        .link-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .link-list li:last-child { border-bottom: none; }
-        .link-list a {
-            color: #0f3460;
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .link-list a:hover { text-decoration: underline; }
-        .link-topic {
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        thead { background: #f8f9fa; }
+        th {
+            padding: 10px 8px;
+            text-align: left;
             color: #555;
-            font-size: 11px;
-            margin-bottom: 3px;
             font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            white-space: nowrap;
         }
+        th:hover { color: #0f3460; }
+        td {
+            padding: 8px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+        }
+        tr:hover { background: #f8f9fa; }
+        .status-active { background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+        .status-inactive { background:#fce4ec; color:#c62828; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+        .yn-y { background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; }
+        .yn-n { background:#fce4ec; color:#c62828; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; }
+        .yn-na { background:#f5f5f5; color:#666; padding:2px 6px; border-radius:3px; font-size:11px; }
+        .overdue { background:#fce4ec; color:#c62828; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; }
+        .completed { background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:3px; font-size:11px; }
+        .inprogress { background:#fff3e0; color:#e65100; padding:2px 6px; border-radius:3px; font-size:11px; }
+        .notstarted { background:#f5f5f5; color:#666; padding:2px 6px; border-radius:3px; font-size:11px; }
+        .loading { text-align:center; color:#666; padding:30px; }
+        .error-text { text-align:center; color:#c00; padding:20px; }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            background: white;
+        }
+        .page-btn.active { background: #0f3460; color: white; border-color: #0f3460; }
+        .page-btn:hover:not(.active) { background: #f5f6fa; }
+        .page-info { font-size: 12px; color: #666; }
         .step-card {
             background: #f8f9fa;
             border-radius: 6px;
@@ -163,15 +231,118 @@
             font-size: 13px;
             flex-shrink: 0;
         }
+        .step-info { flex: 1; }
         .step-info h4 { color: #0f3460; font-size: 13px; }
-        .step-info p { color: #666; font-size: 11px; margin-top: 2px; }
-        .loading { text-align:center; color:#666; padding:30px; font-size:13px; }
-        .error-text { text-align:center; color:#c00; padding:20px; font-size:13px; }
-        .domain-hint {
-            text-align: center;
-            color: #888;
-            padding: 30px;
+        .step-info p { color: #666; font-size: 11px; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h3 { color: #0f3460; margin-bottom: 15px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group.full { grid-column: 1/-1; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            outline: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus { border-color: #0f3460; }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+        .btn-save {
+            background: #0f3460;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
             font-size: 13px;
+        }
+        .btn-cancel {
+            background: #999;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .training-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .training-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #0f3460;
+        }
+        .training-card h4 { color: #0f3460; font-size: 13px; margin-bottom: 5px; }
+        .training-card .platform {
+            background: #0f3460;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+        .training-card a {
+            display: inline-block;
+            margin-top: 8px;
+            color: #0f3460;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .pct-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 4px;
+        }
+        .pct-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: #86bc25;
         }
     </style>
 </head>
@@ -182,32 +353,197 @@
     <h2>🏢 Team Tracker</h2>
     <div class="navbar-right">
         <span class="username-badge" id="usernameDisplay"></span>
-        <span class="role-badge">USER</span>
+        <span class="role-badge" id="roleBadge"></span>
         <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
 </div>
 
 <!-- TABS -->
 <div class="tab-container">
-    <button class="tab-btn active" onclick="showTab('training', event)">Training Links</button>
-    <button class="tab-btn" onclick="showTab('onboarding', event)">Onboarding Steps</button>
+    <button class="tab-btn active" onclick="showTab('teamlist', event)">Team List</button>
+    <button class="tab-btn" onclick="showTab('trainingstatus', event)">Training Status</button>
+    <button class="tab-btn" onclick="showTab('onboarding', event)">Onboarding Formalities</button>
+    <button class="tab-btn" onclick="showTab('traininglinks', event)">Training Resources</button>
+    <span class="admin-only" style="display:none">
+        <button class="tab-btn" onclick="showTab('management', event)">Management</button>
+        <div class="dropdown-container">
+            <button class="dropdown-btn">Other ▾</button>
+            <div class="dropdown-menu">
+                <button class="dropdown-item" onclick="showTab('gdlead', event)">GD Lead Status</button>
+                <button class="dropdown-item" onclick="showTab('mandatory', event)">Mandatory Trainings</button>
+                <button class="dropdown-item" onclick="showTab('demography', event)">Team Demography</button>
+                <button class="dropdown-item" onclick="showTab('activeinactive', event)">Active-Inactive TMs</button>
+                <button class="dropdown-item" onclick="showTab('prsd', event)">PRSD</button>
+                <button class="dropdown-item" onclick="showTab('projects', event)">Projects</button>
+                <button class="dropdown-item" onclick="showTab('users', event)">Users</button>
+            </div>
+        </div>
+    </span>
 </div>
 
 <!-- CONTENT -->
 <div class="content">
 
-    <!-- TRAINING LINKS -->
-    <div class="tab-content active" id="tab-training">
+    <!-- TAB 1: TEAM LIST -->
+    <div class="tab-content active" id="tab-teamlist">
+        <div class="card">
+            <div class="card-header">
+                <h3>Team List</h3>
+                <div class="filters">
+                    <select class="filter-select" id="filterStatus" onchange="applyTeamFilters()">
+                        <option value="">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                    <select class="filter-select" id="filterJobFamily" onchange="applyTeamFilters()">
+                        <option value="">All Job Families</option>
+                    </select>
+                    <select class="filter-select" id="filterLocation" onchange="applyTeamFilters()">
+                        <option value="">All Locations</option>
+                    </select>
+                    <input class="search-box" type="text" id="teamSearch" placeholder="Search..." onkeyup="applyTeamFilters()">
+                    <button class="btn-add admin-only" style="display:none" onclick="showMemberModal()">+ Add Member</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="teamTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('teamTable',0)">Sr# ↕</th>
+                            <th onclick="sortTable('teamTable',1)">Name ↕</th>
+                            <th>Email</th>
+                            <th onclick="sortTable('teamTable',3)">Location ↕</th>
+                            <th>City</th>
+                            <th onclick="sortTable('teamTable',5)">Status ↕</th>
+                            <th onclick="sortTable('teamTable',6)">Job Family ↕</th>
+                            <th>Level</th>
+                            <th>Project</th>
+                            <th>GD Lead 1</th>
+                            <th>GD Lead 2</th>
+                            <th>GD Lead 3</th>
+                            <th>Onboarding Date</th>
+                            <th>Joined</th>
+                            <th>Datadog</th>
+                            <th>AKS</th>
+                            <th>ROVO</th>
+                            <th>CoPilot</th>
+                            <th>Comments</th>
+                            <th class="admin-only" style="display:none">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamBody">
+                        <tr><td colspan="20" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="teamPagination"></div>
+        </div>
+
+        <!-- OFFBOARDED SECTION -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Offboarded Members</h3>
+                <div class="filters">
+                    <input class="search-box" type="text" id="offboardSearch" placeholder="Search..." onkeyup="filterTable('offboardTable', this.value)">
+                    <button class="btn-add admin-only" style="display:none" onclick="showOffboardModal()">+ Add</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="offboardTable">
+                    <thead>
+                        <tr>
+                            <th>Candidate ID</th>
+                            <th onclick="sortTable('offboardTable',1)">Name ↕</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Reason</th>
+                            <th class="admin-only" style="display:none">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="offboardBody">
+                        <tr><td colspan="6" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="offboardPagination"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: TRAINING STATUS -->
+    <div class="tab-content" id="tab-trainingstatus">
+        <div class="card">
+            <div class="card-header">
+                <h3>Training Status</h3>
+                <div class="filters">
+                    <select class="filter-select" id="trainingDomainFilter" onchange="applyTrainingFilter()">
+                        <option value="">All Domains</option>
+                        <option value="Datadog">Datadog</option>
+                        <option value="AKS">AKS</option>
+                        <option value="ROVO">ROVO</option>
+                        <option value="Copilot">Copilot</option>
+                    </select>
+                    <select class="filter-select" id="trainingStatusFilter" onchange="applyTrainingFilter()">
+                        <option value="">All Status</option>
+                        <option value="Completed">Completed</option>
+                        <option value="InProgress">In Progress</option>
+                        <option value="NotStarted">Not Started</option>
+                    </select>
+                    <input class="search-box" type="text" id="trainingSearch" placeholder="Search..." onkeyup="applyTrainingFilter()">
+                    <button class="btn-add admin-only" style="display:none" onclick="showTrainingModal()">+ Add</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="trainingStatusTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th onclick="sortTable('trainingStatusTable',1)">Candidate ID ↕</th>
+                            <th onclick="sortTable('trainingStatusTable',2)">Domain ↕</th>
+                            <th onclick="sortTable('trainingStatusTable',3)">Status ↕</th>
+                            <th>Due Date</th>
+                            <th>Completed Date</th>
+                            <th class="admin-only" style="display:none">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trainingStatusBody">
+                        <tr><td colspan="7" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="trainingPagination"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: ONBOARDING FORMALITIES -->
+    <div class="tab-content" id="tab-onboarding">
+        <div class="card">
+            <div class="card-header">
+                <h3>Onboarding Formalities</h3>
+                <div class="filters">
+                    <select class="filter-select" id="teamSelector" onchange="loadOnboardingByTeam()">
+                        <option value="">-- Select Team --</option>
+                    </select>
+                    <button class="btn-add admin-only" style="display:none" onclick="showStepModal()">+ Add Step</button>
+                </div>
+            </div>
+            <div id="onboardingContent">
+                <p class="loading">Select a team to view onboarding steps</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: TRAINING RESOURCES -->
+    <div class="tab-content" id="tab-traininglinks">
         <div class="card">
             <div class="card-header">
                 <h3>Training Resources</h3>
-                <select class="domain-select" id="domainSelect" onchange="loadTrainingLinks()">
+                <select class="filter-select" id="domainSelect" onchange="loadTrainingLinks()" style="min-width:200px;">
                     <option value="">-- Select Domain --</option>
                     <option value="Copilot|course">Copilot</option>
                     <option value="AKS|course">AKS</option>
                     <option value="ROVO|course">ROVO</option>
                     <option value="DataDog|course">DataDog</option>
-                    <option value="Net|link">.Net</option>
+                    <option value=".Net|link">.Net</option>
                     <option value="CRM|link">CRM</option>
                     <option value="iOS|link">iOS</option>
                     <option value="ETL|link">ETL</option>
@@ -215,60 +551,726 @@
                     <option value="ComplianceTrainingLinks|link">Compliance Training</option>
                 </select>
             </div>
-            <div id="trainingContent">
-                <p class="domain-hint">Please select a domain from the dropdown to view training resources.</p>
+            <div id="trainingLinksContent">
+                <p class="loading">Select a domain to view resources</p>
             </div>
         </div>
     </div>
 
-    <!-- ONBOARDING STEPS -->
-    <div class="tab-content" id="tab-onboarding">
+    <!-- ADMIN: MANAGEMENT TAB -->
+    <div class="tab-content" id="tab-management">
         <div class="card">
             <div class="card-header">
-                <h3>Onboarding Steps</h3>
+                <h3>Management</h3>
+                <div class="filters">
+                    <select class="filter-select" id="mgmtSection" onchange="loadManagement()">
+                        <option value="members">Team Members</option>
+                        <option value="training">Training Status</option>
+                        <option value="steps">Onboarding Steps</option>
+                        <option value="offboarded">Offboarded</option>
+                        <option value="users">Users</option>
+                    </select>
+                </div>
             </div>
-            <div id="onboardingStepsList">
+            <div id="managementContent">
                 <p class="loading">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN: GD LEAD -->
+    <div class="tab-content" id="tab-gdlead">
+        <div class="card">
+            <div class="card-header">
+                <h3>GD Lead Status</h3>
+                <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('gdleadTable', this.value)">
+            </div>
+            <div class="table-wrapper">
+                <table id="gdleadTable">
+                    <thead>
+                        <tr>
+                            <th>Skill Set</th>
+                            <th>GD Lead</th>
+                            <th>Total Resources</th>
+                            <th>Additional Tools</th>
+                            <th>Key Highlights</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gdleadBody">
+                        <tr><td colspan="5" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN: MANDATORY -->
+    <div class="tab-content" id="tab-mandatory">
+        <div class="card">
+            <div class="card-header">
+                <h3>Mandatory Trainings</h3>
+                <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('mandatoryTable', this.value)">
+            </div>
+            <div class="table-wrapper">
+                <table id="mandatoryTable">
+                    <thead>
+                        <tr>
+                            <th>Job Family</th>
+                            <th>Mandatory Trainings</th>
+                            <th>POC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mandatoryBody">
+                        <tr><td colspan="3" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN: DEMOGRAPHY -->
+    <div class="tab-content" id="tab-demography">
+        <div class="card">
+            <div class="card-header"><h3>Full Team Demography</h3></div>
+            <div id="demographyContent" class="loading">Loading...</div>
+        </div>
+    </div>
+
+    <!-- ADMIN: ACTIVE INACTIVE -->
+    <div class="tab-content" id="tab-activeinactive">
+        <div class="card">
+            <div class="card-header"><h3>Active-Inactive TMs</h3></div>
+            <div class="table-wrapper">
+                <table id="activeInactiveTable">
+                    <thead><tr><th>Level</th><th>Count</th></tr></thead>
+                    <tbody id="activeInactiveBody">
+                        <tr><td colspan="2" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN: PRSD -->
+    <div class="tab-content" id="tab-prsd">
+        <div class="card">
+            <div class="card-header">
+                <h3>PRSD</h3>
+                <div class="filters">
+                    <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('prsdTable', this.value)">
+                    <button class="btn-add" onclick="showPRSDModal()">+ Add</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="prsdTable">
+                    <thead>
+                        <tr>
+                            <th>LOB</th>
+                            <th>Track Name</th>
+                            <th>Prod Support</th>
+                            <th>Status</th>
+                            <th>Confidence %</th>
+                            <th>ETA</th>
+                            <th>Resource</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prsdBody">
+                        <tr><td colspan="9" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN: PROJECTS -->
+    <div class="tab-content" id="tab-projects">
+        <div class="card">
+            <div class="card-header">
+                <h3>Projects</h3>
+                <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('projectsTable', this.value)">
+            </div>
+            <div class="table-wrapper">
+                <table id="projectsTable">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Project Name</th>
+                            <th>Status</th>
+                            <th>Team Count</th>
+                            <th>Team Lead</th>
+                            <th>USA Team</th>
+                            <th>ADMX Team</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsBody">
+                        <tr><td colspan="7" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN: USERS -->
+    <div class="tab-content" id="tab-users">
+        <div class="card">
+            <div class="card-header">
+                <h3>Users Management</h3>
+                <div class="filters">
+                    <input class="search-box" type="text" placeholder="Search..." onkeyup="filterTable('usersTable', this.value)">
+                    <button class="btn-add" onclick="showUserModal()">+ Add User</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        <tr><td colspan="5" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
 </div>
 
+<!-- MODALS -->
+<!-- Member Modal -->
+<div class="modal-overlay" id="memberModal">
+    <div class="modal">
+        <h3 id="memberModalTitle">Add Team Member</h3>
+        <div class="form-grid">
+            <div class="form-group"><label>Name</label><input type="text" id="mName"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="mEmail"></div>
+            <div class="form-group"><label>Location</label><input type="text" id="mLocation"></div>
+            <div class="form-group"><label>City</label><input type="text" id="mCity"></div>
+            <div class="form-group"><label>Status</label>
+                <select id="mStatus">
+                    <option>Active</option>
+                    <option>Inactive</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Job Family</label><input type="text" id="mJobFamily"></div>
+            <div class="form-group"><label>Level</label><input type="text" id="mLevel"></div>
+            <div class="form-group"><label>Project</label><input type="text" id="mProject"></div>
+            <div class="form-group"><label>GD Leader 1</label><input type="text" id="mGD1"></div>
+            <div class="form-group"><label>GD Leader 2</label><input type="text" id="mGD2"></div>
+            <div class="form-group"><label>GD Leader 3</label><input type="text" id="mGD3"></div>
+            <div class="form-group"><label>Onboarding Date</label><input type="date" id="mOnboardDate"></div>
+            <div class="form-group"><label>Joined (Y/N)</label><select id="mJoined"><option>Y</option><option>N</option></select></div>
+            <div class="form-group"><label>Mobile Number</label><input type="text" id="mMobile"></div>
+            <div class="form-group"><label>Datadog</label><select id="mDatadog"><option>Y</option><option>N</option><option>N/A</option></select></div>
+            <div class="form-group"><label>AKS</label><select id="mAKS"><option>Y</option><option>N</option><option>N/A</option></select></div>
+            <div class="form-group"><label>ROVO</label><select id="mROVO"><option>Y</option><option>N</option><option>N/A</option></select></div>
+            <div class="form-group"><label>CoPilot</label><select id="mCoPilot"><option>Y</option><option>N</option><option>N/A</option></select></div>
+            <div class="form-group full"><label>Comments</label><textarea id="mComments" rows="2"></textarea></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('memberModal')">Cancel</button>
+            <button class="btn-save" onclick="saveMember()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Offboard Modal -->
+<div class="modal-overlay" id="offboardModal">
+    <div class="modal">
+        <h3>Add Offboarded Member</h3>
+        <div class="form-group"><label>Candidate ID</label><input type="number" id="obCandidateId"></div>
+        <div class="form-group"><label>Name</label><input type="text" id="obName"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="obEmail"></div>
+        <div class="form-group"><label>Role</label><input type="text" id="obRole"></div>
+        <div class="form-group"><label>Reason</label><textarea id="obReason" rows="3"></textarea></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('offboardModal')">Cancel</button>
+            <button class="btn-save" onclick="saveOffboard()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Training Modal -->
+<div class="modal-overlay" id="trainingModal">
+    <div class="modal">
+        <h3 id="trainingModalTitle">Add Training Status</h3>
+        <div class="form-group"><label>Candidate ID</label><input type="number" id="tsCandidateId"></div>
+        <div class="form-group"><label>Domain</label>
+            <select id="tsDomain">
+                <option>Datadog</option>
+                <option>AKS</option>
+                <option>ROVO</option>
+                <option>Copilot</option>
+                <option>AI Fluency</option>
+                <option>Claude 101</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+            <select id="tsStatus">
+                <option>NotStarted</option>
+                <option>InProgress</option>
+                <option>Completed</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="tsDueDate"></div>
+        <div class="form-group"><label>Completed Date</label><input type="date" id="tsCompletedDate"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('trainingModal')">Cancel</button>
+            <button class="btn-save" onclick="saveTraining()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Step Modal -->
+<div class="modal-overlay" id="stepModal">
+    <div class="modal">
+        <h3 id="stepModalTitle">Add Onboarding Step</h3>
+        <div class="form-group"><label>Team Name</label>
+            <select id="stepTeam">
+                <option value="">Select Team</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Step Name</label><input type="text" id="stepName"></div>
+        <div class="form-group"><label>Step Order</label><input type="number" id="stepOrder"></div>
+        <div class="form-group"><label>Description</label><textarea id="stepDesc" rows="3"></textarea></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('stepModal')">Cancel</button>
+            <button class="btn-save" onclick="saveStep()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="userModal">
+    <div class="modal">
+        <h3 id="userModalTitle">Add User</h3>
+        <div class="form-group"><label>Username (email)</label><input type="email" id="uUsername"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="uPassword"></div>
+        <div class="form-group"><label>Role</label>
+            <select id="uRole">
+                <option>Admin</option>
+                <option>User</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Active</label>
+            <select id="uActive">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('userModal')">Cancel</button>
+            <button class="btn-save" onclick="saveUser()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- PRSD Modal -->
+<div class="modal-overlay" id="prsdModal">
+    <div class="modal">
+        <h3 id="prsdModalTitle">Add PRSD</h3>
+        <div class="form-grid">
+            <div class="form-group"><label>LOB</label><input type="text" id="prsdLOB"></div>
+            <div class="form-group"><label>Track Name</label><input type="text" id="prsdTrack"></div>
+            <div class="form-group"><label>Prod Support Applicable</label><select id="prsdApplicable"><option>Y</option><option>N</option></select></div>
+            <div class="form-group"><label>Prod Support Status</label><select id="prsdStatus"><option>Started</option><option>Not started</option></select></div>
+            <div class="form-group"><label>Confidence Level %</label><input type="text" id="prsdConfidence"></div>
+            <div class="form-group"><label>ETA Date</label><input type="date" id="prsdETA"></div>
+            <div class="form-group"><label>Resource Name</label><input type="text" id="prsdResource"></div>
+            <div class="form-group"><label>Contact Number</label><input type="text" id="prsdContact"></div>
+            <div class="form-group full"><label>Challenges</label><textarea id="prsdChallenges" rows="2"></textarea></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('prsdModal')">Cancel</button>
+            <button class="btn-save" onclick="savePRSD()">Save</button>
+        </div>
+    </div>
+</div>
+
 <script>
-const API = 'http://localhost:5289';
+const API = '';
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role');
 const username = localStorage.getItem('username');
 
-if (!token) {
-    window.location.href = 'index.html';
-}
+if (!token) window.location.href = 'index.html';
 
+// Setup UI based on role
+document.getElementById('usernameDisplay').textContent = 'Welcome, ' + username;
+var roleBadge = document.getElementById('roleBadge');
+roleBadge.textContent = role;
+roleBadge.className = 'role-badge ' + (role === 'Admin' ? 'role-admin' : 'role-user');
+
+// Show admin elements
 if (role === 'Admin') {
-    window.location.href = 'admin.html';
+    document.querySelectorAll('.admin-only')
+        .forEach(function(el) { el.style.display = 'inline-block'; });
 }
 
-document.getElementById('usernameDisplay')
-    .textContent = 'Welcome, ' + username;
+// Pagination settings
+var PAGE_SIZE = 20;
+var teamPage = 1;
+var trainingPage = 1;
+var offboardPage = 1;
+var allTeamData = [];
+var allTrainingData = [];
+var allOffboardData = [];
+var allSteps = [];
+var currentEditId = null;
+var currentEditType = null;
 
-function showTab(tabName, event) {
-    document.querySelectorAll('.tab-content')
-        .forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.tab-btn')
-        .forEach(function(b) { b.classList.remove('active'); });
-    document.getElementById('tab-' + tabName)
-        .classList.add('active');
-    event.target.classList.add('active');
-    if (tabName === 'onboarding') loadOnboardingSteps();
+// Project teams for dropdown
+var projectTeams = [
+    'GBOS-Risk','FIREWIRE-BAU','Baas Mobile App',
+    'CES-IVR Engineering','TAX','Retail and Direct',
+    'GD CRM','SBTPG-CRM','SBTPG-Preston','ETL',
+    'Fireside Modernization 2.0','Fireside Risk',
+    'Firewire CRM','Legacy to GBOS',
+    'Foseti(Arc Platform)','MM-GDN','RM','BAAS-SRE',
+    'RE/DevOps','GSS to AKS','DBA','SDET',
+    'Jira Administrator','SRE-Firewire',
+    'Money Makers','IT Infra','Network Infra'
+];
+
+// Populate team dropdowns
+function populateTeamDropdowns() {
+    var selectors = ['teamSelector', 'stepTeam'];
+    selectors.forEach(function(id) {
+        var sel = document.getElementById(id);
+        if (!sel) return;
+        projectTeams.forEach(function(team) {
+            sel.innerHTML += '<option value="' + team + '">' + team + '</option>';
+        });
+    });
 }
+populateTeamDropdowns();
 
+// API helpers
 function apiGet(url) {
     return fetch(API + url, {
         headers: { 'Authorization': 'Bearer ' + token }
     }).then(function(r) { return r.json(); });
 }
 
+function apiPost(url, data) {
+    return fetch(API + url, {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(function(r) { return r.json(); });
+}
+
+function apiPatch(url, data) {
+    return fetch(API + url, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(function(r) { return r.json(); });
+}
+
+function apiDelete(url) {
+    return fetch(API + url, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(r) { return r.json(); });
+}
+
+function safe(val) { return val || ''; }
+
+function yn(val) {
+    if (!val) return '<span class="yn-na">N/A</span>';
+    var v = val.toUpperCase();
+    if (v === 'Y') return '<span class="yn-y">Y</span>';
+    if (v === 'N') return '<span class="yn-n">N</span>';
+    return '<span class="yn-na">' + val + '</span>';
+}
+
+function statusBadge(val) {
+    if (!val) return '<span class="notstarted">Not Started</span>';
+    var v = val.toLowerCase().replace(/\s/g,'');
+    if (v === 'completed') return '<span class="completed">Completed</span>';
+    if (v === 'inprogress') return '<span class="inprogress">In Progress</span>';
+    return '<span class="notstarted">Not Started</span>';
+}
+
+function isOverdue(dueDate, status) {
+    if (!dueDate) return false;
+    if (status && status.toLowerCase() === 'completed') return false;
+    var due = new Date(dueDate);
+    return due < new Date();
+}
+
+// TAB SWITCHING
+function showTab(tabName, event) {
+    document.querySelectorAll('.tab-content')
+        .forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn, .dropdown-btn')
+        .forEach(function(b) { b.classList.remove('active'); });
+
+    var tab = document.getElementById('tab-' + tabName);
+    if (tab) tab.classList.add('active');
+    if (event && event.target) 
+        event.target.classList.add('active');
+
+    if (tabName === 'teamlist') { loadTeamList(); loadOffboarded(); }
+    else if (tabName === 'trainingstatus') loadTrainingStatus();
+    else if (tabName === 'onboarding') loadOnboardingTeams();
+    else if (tabName === 'traininglinks') {}
+    else if (tabName === 'management') loadManagement();
+    else if (tabName === 'gdlead') loadGDLead();
+    else if (tabName === 'mandatory') loadMandatory();
+    else if (tabName === 'demography') loadDemography();
+    else if (tabName === 'activeinactive') loadActiveInactive();
+    else if (tabName === 'prsd') loadPRSD();
+    else if (tabName === 'projects') loadProjects();
+    else if (tabName === 'users') loadUsers();
+}
+
+// ==================
+// TEAM LIST
+// ==================
+function loadTeamList() {
+    apiGet('/api/teammember/all')
+    .then(function(data) {
+        allTeamData = data;
+        populateTeamFilters(data);
+        teamPage = 1;
+        renderTeamTable(data);
+    }).catch(function() {
+        document.getElementById('teamBody').innerHTML =
+            '<tr><td colspan="20" class="error-text">Error loading data</td></tr>';
+    });
+}
+
+function populateTeamFilters(data) {
+    var jf = [...new Set(data.map(function(m) { return m.jobFamily; }).filter(Boolean))].sort();
+    var loc = [...new Set(data.map(function(m) { return m.location; }).filter(Boolean))].sort();
+    var jfSel = document.getElementById('filterJobFamily');
+    var locSel = document.getElementById('filterLocation');
+    jfSel.innerHTML = '<option value="">All Job Families</option>';
+    locSel.innerHTML = '<option value="">All Locations</option>';
+    jf.forEach(function(j) { jfSel.innerHTML += '<option>' + j + '</option>'; });
+    loc.forEach(function(l) { locSel.innerHTML += '<option>' + l + '</option>'; });
+}
+
+function applyTeamFilters() {
+    var status = document.getElementById('filterStatus').value;
+    var jf = document.getElementById('filterJobFamily').value;
+    var loc = document.getElementById('filterLocation').value;
+    var search = document.getElementById('teamSearch').value.toLowerCase();
+
+    var filtered = allTeamData.filter(function(m) {
+        return (!status || m.status === status) &&
+               (!jf || m.jobFamily === jf) &&
+               (!loc || m.location === loc) &&
+               (!search || JSON.stringify(m).toLowerCase().includes(search));
+    });
+    teamPage = 1;
+    renderTeamTable(filtered);
+}
+
+function renderTeamTable(data) {
+    var start = (teamPage - 1) * PAGE_SIZE;
+    var paged = data.slice(start, start + PAGE_SIZE);
+    var tbody = document.getElementById('teamBody');
+    tbody.innerHTML = '';
+
+    if (!paged.length) {
+        tbody.innerHTML = '<tr><td colspan="20" class="loading">No data found</td></tr>';
+    } else {
+        paged.forEach(function(m) {
+            var adminActions = role === 'Admin' ?
+                '<td><button class="btn-edit" onclick="editMember(' + m.srNo + ')">Edit</button>' +
+                '<button class="btn-delete" onclick="deleteMember(' + m.srNo + ')">Del</button></td>' : '';
+            tbody.innerHTML += '<tr>' +
+                '<td>' + safe(m.srNo) + '</td>' +
+                '<td>' + safe(m.name) + '</td>' +
+                '<td>' + safe(m.email) + '</td>' +
+                '<td>' + safe(m.location) + '</td>' +
+                '<td>' + safe(m.city) + '</td>' +
+                '<td><span class="' + (m.status === 'Active' ? 'status-active' : 'status-inactive') + '">' + safe(m.status) + '</span></td>' +
+                '<td>' + safe(m.jobFamily) + '</td>' +
+                '<td>' + safe(m.level) + '</td>' +
+                '<td>' + safe(m.project) + '</td>' +
+                '<td>' + safe(m.gdLeader1) + '</td>' +
+                '<td>' + safe(m.gdLeader2) + '</td>' +
+                '<td>' + safe(m.gdLeader3) + '</td>' +
+                '<td>' + safe(m.onboardingDate) + '</td>' +
+                '<td>' + safe(m.joined) + '</td>' +
+                '<td>' + yn(m.datadog) + '</td>' +
+                '<td>' + yn(m.aksTrained) + '</td>' +
+                '<td>' + yn(m.rovo) + '</td>' +
+                '<td>' + yn(m.coPilotTrained) + '</td>' +
+                '<td>' + safe(m.comments) + '</td>' +
+                adminActions +
+                '</tr>';
+        });
+    }
+    renderPagination('teamPagination', data.length, teamPage, function(p) {
+        teamPage = p;
+        renderTeamTable(data);
+    });
+}
+
+// ==================
+// OFFBOARDED
+// ==================
+function loadOffboarded() {
+    apiGet('/api/offboarded')
+    .then(function(data) {
+        allOffboardData = data;
+        offboardPage = 1;
+        renderOffboardTable(data);
+    }).catch(function() {
+        document.getElementById('offboardBody').innerHTML =
+            '<tr><td colspan="6" class="error-text">Error loading</td></tr>';
+    });
+}
+
+function renderOffboardTable(data) {
+    var start = (offboardPage - 1) * PAGE_SIZE;
+    var paged = data.slice(start, start + PAGE_SIZE);
+    var tbody = document.getElementById('offboardBody');
+    tbody.innerHTML = '';
+
+    paged.forEach(function(m) {
+        var adminActions = role === 'Admin' ?
+            '<td><button class="btn-delete" onclick="deleteOffboard(' + m.candidateId + ')">Del</button></td>' : '';
+        tbody.innerHTML += '<tr>' +
+            '<td>' + safe(m.candidateId) + '</td>' +
+            '<td>' + safe(m.name) + '</td>' +
+            '<td>' + safe(m.email) + '</td>' +
+            '<td>' + safe(m.role) + '</td>' +
+            '<td>' + safe(m.reason) + '</td>' +
+            adminActions + '</tr>';
+    });
+
+    renderPagination('offboardPagination', data.length, offboardPage, function(p) {
+        offboardPage = p;
+        renderOffboardTable(data);
+    });
+}
+
+// ==================
+// TRAINING STATUS
+// ==================
+function loadTrainingStatus() {
+    apiGet('/api/trainingstatus')
+    .then(function(data) {
+        allTrainingData = data;
+        trainingPage = 1;
+        renderTrainingTable(data);
+    }).catch(function() {
+        document.getElementById('trainingStatusBody').innerHTML =
+            '<tr><td colspan="7" class="error-text">Error loading</td></tr>';
+    });
+}
+
+function applyTrainingFilter() {
+    var domain = document.getElementById('trainingDomainFilter').value;
+    var status = document.getElementById('trainingStatusFilter').value;
+    var search = document.getElementById('trainingSearch').value.toLowerCase();
+
+    var filtered = allTrainingData.filter(function(t) {
+        return (!domain || t.domain === domain) &&
+               (!status || t.status === status) &&
+               (!search || JSON.stringify(t).toLowerCase().includes(search));
+    });
+    trainingPage = 1;
+    renderTrainingTable(filtered);
+}
+
+function renderTrainingTable(data) {
+    var start = (trainingPage - 1) * PAGE_SIZE;
+    var paged = data.slice(start, start + PAGE_SIZE);
+    var tbody = document.getElementById('trainingStatusBody');
+    tbody.innerHTML = '';
+
+    paged.forEach(function(t) {
+        var overdue = isOverdue(t.dueDate, t.status);
+        var dueDateDisplay = t.dueDate ?
+            (overdue ? '<span class="overdue">⚠ ' + t.dueDate + '</span>' : t.dueDate) : '';
+        var adminActions = role === 'Admin' ?
+            '<td><button class="btn-edit" onclick="editTraining(' + t.trainingID + ')">Edit</button>' +
+            '<button class="btn-delete" onclick="deleteTraining(' + t.trainingID + ')">Del</button></td>' : '';
+
+        tbody.innerHTML += '<tr>' +
+            '<td>' + safe(t.trainingID) + '</td>' +
+            '<td>' + safe(t.candidateID) + '</td>' +
+            '<td>' + safe(t.domain) + '</td>' +
+            '<td>' + statusBadge(t.status) + '</td>' +
+            '<td>' + dueDateDisplay + '</td>' +
+            '<td>' + safe(t.completedDate) + '</td>' +
+            adminActions + '</tr>';
+    });
+
+    renderPagination('trainingPagination', data.length, trainingPage, function(p) {
+        trainingPage = p;
+        renderTrainingTable(data);
+    });
+}
+
+// ==================
+// ONBOARDING
+// ==================
+function loadOnboardingTeams() {
+    // Teams already in dropdown
+}
+
+function loadOnboardingByTeam() {
+    var team = document.getElementById('teamSelector').value;
+    if (!team) return;
+
+    var container = document.getElementById('onboardingContent');
+    container.innerHTML = '<p class="loading">Loading...</p>';
+
+    apiGet('/api/onboarding/steps/team/' + encodeURIComponent(team))
+    .then(function(steps) {
+        allSteps = steps;
+        container.innerHTML = '';
+
+        if (!steps.length) {
+            container.innerHTML = '<p class="loading">No steps found for this team</p>';
+            return;
+        }
+
+        steps.sort(function(a, b) { return a.stepOrder - b.stepOrder; });
+        steps.forEach(function(step) {
+            var adminActions = role === 'Admin' ?
+                '<div style="display:flex;gap:5px;">' +
+                '<button class="btn-edit" onclick="editStep(' + step.stepID + ')">Edit</button>' +
+                '<button class="btn-delete" onclick="deleteStep(' + step.stepID + ')">Del</button>' +
+                '</div>' : '';
+
+            container.innerHTML +=
+                '<div class="step-card">' +
+                '<div class="step-num">' + step.stepOrder + '</div>' +
+                '<div class="step-info">' +
+                '<h4>' + safe(step.stepName) + '</h4>' +
+                '<p>' + safe(step.description) + '</p>' +
+                '</div>' +
+                adminActions +
+                '</div>';
+        });
+    });
+}
+
+// ==================
+// TRAINING LINKS
+// ==================
 function loadTrainingLinks() {
     var selected = document.getElementById('domainSelect').value;
     if (!selected) return;
@@ -276,89 +1278,518 @@ function loadTrainingLinks() {
     var parts = selected.split('|');
     var domain = parts[0];
     var type = parts[1];
-
-    var container = document.getElementById('trainingContent');
+    var container = document.getElementById('trainingLinksContent');
     container.innerHTML = '<p class="loading">Loading...</p>';
 
     if (type === 'course') {
         apiGet('/api/training/courses/' + domain)
         .then(function(data) {
             if (!data.length) {
-                container.innerHTML = '<p class="domain-hint">No training resources found for this domain.</p>';
+                container.innerHTML = '<p class="loading">No resources found</p>';
                 return;
             }
             var html = '<div class="training-grid">';
-            data.forEach(function(course) {
+            data.forEach(function(c) {
                 html += '<div class="training-card">' +
-                    (course.platform ? '<span class="platform">' + course.platform + '</span>' : '') +
-                    '<h4>' + (course.title || '') + '</h4>' +
-                    (course.estTime ? '<div class="est-time">⏱ ' + course.estTime + '</div>' : '') +
-                    (course.remark ? '<div class="remark">' + course.remark + '</div>' : '') +
-                    (course.link ? '<a href="' + course.link + '" target="_blank">Open Course →</a>' : '') +
+                    (c.platform ? '<span class="platform">' + c.platform + '</span>' : '') +
+                    '<h4>' + safe(c.title) + '</h4>' +
+                    (c.estTime ? '<div style="color:#86bc25;font-size:11px;">⏱ ' + c.estTime + '</div>' : '') +
+                    (c.remark ? '<div style="color:#888;font-size:11px;">' + c.remark + '</div>' : '') +
+                    (c.link ? '<a href="' + c.link + '" target="_blank">Open →</a>' : '') +
                     '</div>';
             });
             html += '</div>';
             container.innerHTML = html;
-        })
-        .catch(function() {
-            container.innerHTML = '<p class="error-text">Error loading training resources</p>';
         });
     } else {
         apiGet('/api/training/links/' + domain)
         .then(function(data) {
             if (!data.length) {
-                container.innerHTML = '<p class="domain-hint">No links found for this domain.</p>';
+                container.innerHTML = '<p class="loading">No links found</p>';
                 return;
             }
-            var html = '<ul class="link-list">';
+            var html = '<ul style="list-style:none;">';
             data.forEach(function(item) {
-                html += '<li>' +
-                    '<div class="link-topic">' + (item.topic || '') + '</div>' +
-                    (item.link ? '<a href="' + item.link + '" target="_blank">' + item.link + '</a>' : 'No link available') +
+                html += '<li style="padding:10px 0;border-bottom:1px solid #f0f0f0;">' +
+                    '<div style="color:#555;font-size:11px;font-weight:600;">' + safe(item.topic) + '</div>' +
+                    (item.link ? '<a href="' + item.link + '" target="_blank" style="color:#0f3460;font-size:12px;">' + item.link + '</a>' : '') +
                     '</li>';
             });
             html += '</ul>';
             container.innerHTML = html;
-        })
-        .catch(function() {
-            container.innerHTML = '<p class="error-text">Error loading links</p>';
         });
     }
 }
 
-function loadOnboardingSteps() {
-    apiGet('/api/onboarding/steps')
+// ==================
+// MANAGEMENT TAB
+// ==================
+function loadManagement() {
+    var section = document.getElementById('mgmtSection').value;
+    var container = document.getElementById('managementContent');
+    container.innerHTML = '<p class="loading">Loading...</p>';
+
+    if (section === 'members') loadTeamList();
+    else if (section === 'training') loadTrainingStatus();
+    else if (section === 'steps') {
+        container.innerHTML = '<p style="padding:20px;color:#666;">Select a team from the Onboarding Formalities tab to manage steps.</p>';
+    }
+    else if (section === 'offboarded') loadOffboarded();
+    else if (section === 'users') loadUsers();
+}
+
+// ==================
+// OTHER TABS
+// ==================
+function loadGDLead() {
+    apiGet('/api/gdlead')
     .then(function(data) {
-        var container = document
-            .getElementById('onboardingStepsList');
-        container.innerHTML = '';
-        if (!data.length) {
-            container.innerHTML = '<p class="loading">No steps found</p>';
-            return;
-        }
-        data.sort(function(a, b) {
-            return a.stepOrder - b.stepOrder;
+        var tbody = document.getElementById('gdleadBody');
+        tbody.innerHTML = '';
+        data.forEach(function(g) {
+            tbody.innerHTML += '<tr>' +
+                '<td>' + safe(g.skillSet) + '</td>' +
+                '<td>' + safe(g.gdLeadName) + '</td>' +
+                '<td>' + safe(g.totalResources) + '</td>' +
+                '<td>' + safe(g.additionalTools) + '</td>' +
+                '<td>' + safe(g.keyHighlights) + '</td>' +
+                '</tr>';
         });
-        data.forEach(function(step) {
-            container.innerHTML +=
-                '<div class="step-card">' +
-                '<div class="step-num">' + step.stepOrder + '</div>' +
-                '<div class="step-info">' +
-                '<h4>' + step.stepName + '</h4>' +
-                '<p>' + (step.description || '') + '</p>' +
-                '</div></div>';
-        });
-    })
-    .catch(function() {
-        document.getElementById('onboardingStepsList').innerHTML =
-            '<p class="error-text">Error loading steps</p>';
     });
+}
+
+function loadMandatory() {
+    apiGet('/api/training/mandatory')
+    .then(function(data) {
+        var tbody = document.getElementById('mandatoryBody');
+        tbody.innerHTML = '';
+        data.forEach(function(t) {
+            tbody.innerHTML += '<tr>' +
+                '<td>' + safe(t.jobFamily) + '</td>' +
+                '<td>' + safe(t.mandatoryTraining) + '</td>' +
+                '<td>' + safe(t.pOC) + '</td>' +
+                '</tr>';
+        });
+    });
+}
+
+function loadDemography() {
+    apiGet('/api/admindata/team-demography')
+    .then(function(data) {
+        var container = document.getElementById('demographyContent');
+        if (!data.length) { container.innerHTML = '<p class="loading">No data</p>'; return; }
+        var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>';
+        Object.keys(data[0]).forEach(function(k) {
+            html += '<th style="padding:8px;background:#f8f9fa;border-bottom:2px solid #e0e0e0;">' + k + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        data.forEach(function(row) {
+            html += '<tr>';
+            Object.values(row).forEach(function(v) {
+                html += '<td style="padding:8px;border-bottom:1px solid #f0f0f0;">' + (v || '') + '</td>';
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    });
+}
+
+function loadActiveInactive() {
+    apiGet('/api/admindata/active-inactive')
+    .then(function(data) {
+        var tbody = document.getElementById('activeInactiveBody');
+        tbody.innerHTML = '';
+        data.forEach(function(row) {
+            var keys = Object.keys(row);
+            tbody.innerHTML += '<tr><td>' + (row[keys[0]] || '') + '</td><td>' + (row[keys[1]] || '') + '</td></tr>';
+        });
+    });
+}
+
+function loadPRSD() {
+    apiGet('/api/prsd')
+    .then(function(data) {
+        var tbody = document.getElementById('prsdBody');
+        tbody.innerHTML = '';
+        data.forEach(function(p) {
+            tbody.innerHTML += '<tr>' +
+                '<td>' + safe(p.lob) + '</td>' +
+                '<td>' + safe(p.trackName) + '</td>' +
+                '<td>' + safe(p.prodSupportApplicable) + '</td>' +
+                '<td>' + safe(p.prodSupport) + '</td>' +
+                '<td>' + safe(p.prodSupportConfidenceLevel) + '</td>' +
+                '<td>' + safe(p.prodSupportETA) + '</td>' +
+                '<td>' + safe(p.resourceName) + '</td>' +
+                '<td>' + safe(p.contactNumber) + '</td>' +
+                '<td>' +
+                '<button class="btn-edit" onclick="editPRSD(\'' + p.lob + '\',\'' + p.trackName + '\')">Edit</button>' +
+                '<button class="btn-delete" onclick="deletePRSD(\'' + p.lob + '\',\'' + p.trackName + '\')">Del</button>' +
+                '</td></tr>';
+        });
+    });
+}
+
+function loadProjects() {
+    apiGet('/api/projects')
+    .then(function(data) {
+        var tbody = document.getElementById('projectsBody');
+        tbody.innerHTML = '';
+        data.forEach(function(p) {
+            tbody.innerHTML += '<tr>' +
+                '<td>' + safe(p.sNo) + '</td>' +
+                '<td>' + safe(p.projectName) + '</td>' +
+                '<td><span class="' + (p.status === 'Active' ? 'status-active' : 'status-inactive') + '">' + safe(p.status) + '</span></td>' +
+                '<td>' + safe(p.teamCount) + '</td>' +
+                '<td>' + safe(p.deloitteTeamLead) + '</td>' +
+                '<td>' + yn(p.hasUSATeam) + '</td>' +
+                '<td>' + yn(p.hasADMXTeam) + '</td>' +
+                '</tr>';
+        });
+    });
+}
+
+function loadUsers() {
+    apiGet('/api/users')
+    .then(function(data) {
+        var tbody = document.getElementById('usersBody');
+        tbody.innerHTML = '';
+        data.forEach(function(u) {
+            tbody.innerHTML += '<tr>' +
+                '<td>' + safe(u.userID) + '</td>' +
+                '<td>' + safe(u.username) + '</td>' +
+                '<td>' + safe(u.role) + '</td>' +
+                '<td>' + (u.isActive ? '✅' : '❌') + '</td>' +
+                '<td>' +
+                '<button class="btn-edit" onclick="editUser(' + u.userID + ')">Edit</button>' +
+                '<button class="btn-delete" onclick="deleteUser(' + u.userID + ')">Del</button>' +
+                '</td></tr>';
+        });
+    });
+}
+
+// ==================
+// PAGINATION
+// ==================
+function renderPagination(containerId, total, currentPage, onPageChange) {
+    var container = document.getElementById(containerId);
+    var totalPages = Math.ceil(total / PAGE_SIZE);
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    var html = '<button class="page-btn" onclick="(' + onPageChange.toString() + ')(' + Math.max(1, currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>← Prev</button>';
+    html += '<span class="page-info">Page ' + currentPage + ' of ' + totalPages + ' (' + total + ' records)</span>';
+    html += '<button class="page-btn" onclick="(' + onPageChange.toString() + ')(' + Math.min(totalPages, currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next →</button>';
+
+    container.innerHTML = html;
+}
+
+// ==================
+// MODALS
+// ==================
+function showMemberModal(data) {
+    currentEditId = data ? data.srNo : null;
+    currentEditType = 'member';
+    document.getElementById('memberModalTitle').textContent = data ? 'Edit Team Member' : 'Add Team Member';
+    if (data) {
+        document.getElementById('mName').value = data.name || '';
+        document.getElementById('mEmail').value = data.email || '';
+        document.getElementById('mLocation').value = data.location || '';
+        document.getElementById('mCity').value = data.city || '';
+        document.getElementById('mStatus').value = data.status || 'Active';
+        document.getElementById('mJobFamily').value = data.jobFamily || '';
+        document.getElementById('mLevel').value = data.level || '';
+        document.getElementById('mProject').value = data.project || '';
+        document.getElementById('mGD1').value = data.gdLeader1 || '';
+        document.getElementById('mGD2').value = data.gdLeader2 || '';
+        document.getElementById('mGD3').value = data.gdLeader3 || '';
+        document.getElementById('mMobile').value = data.mobileNumber || '';
+        document.getElementById('mComments').value = data.comments || '';
+    } else {
+        document.getElementById('memberModal').querySelectorAll('input,textarea').forEach(function(el) { el.value = ''; });
+    }
+    document.getElementById('memberModal').classList.add('show');
+}
+
+function saveMember() {
+    var data = {
+        name: document.getElementById('mName').value,
+        email: document.getElementById('mEmail').value,
+        location: document.getElementById('mLocation').value,
+        city: document.getElementById('mCity').value,
+        status: document.getElementById('mStatus').value,
+        jobFamily: document.getElementById('mJobFamily').value,
+        level: document.getElementById('mLevel').value,
+        project: document.getElementById('mProject').value,
+        gdLeader1: document.getElementById('mGD1').value,
+        gdLeader2: document.getElementById('mGD2').value,
+        gdLeader3: document.getElementById('mGD3').value,
+        mobileNumber: document.getElementById('mMobile').value,
+        comments: document.getElementById('mComments').value,
+        datadog: document.getElementById('mDatadog').value,
+        aksTrained: document.getElementById('mAKS').value,
+        rovo: document.getElementById('mROVO').value,
+        coPilotTrained: document.getElementById('mCoPilot').value
+    };
+
+    var promise = currentEditId ?
+        apiPatch('/api/teammember/' + currentEditId, data) :
+        apiPost('/api/teammember', data);
+
+    promise.then(function() {
+        closeModal('memberModal');
+        loadTeamList();
+    });
+}
+
+function editMember(srNo) {
+    var member = allTeamData.find(function(m) { return m.srNo === srNo; });
+    if (member) showMemberModal(member);
+}
+
+function deleteMember(srNo) {
+    if (!confirm('Delete this team member?')) return;
+    apiDelete('/api/teammember/' + srNo)
+        .then(function() { loadTeamList(); });
+}
+
+function showOffboardModal() {
+    document.getElementById('offboardModal').classList.add('show');
+}
+
+function saveOffboard() {
+    var data = {
+        candidateId: parseInt(document.getElementById('obCandidateId').value),
+        name: document.getElementById('obName').value,
+        email: document.getElementById('obEmail').value,
+        role: document.getElementById('obRole').value,
+        reason: document.getElementById('obReason').value
+    };
+    apiPost('/api/offboarded', data).then(function() {
+        closeModal('offboardModal');
+        loadOffboarded();
+    });
+}
+
+function deleteOffboard(id) {
+    if (!confirm('Delete this offboarded member?')) return;
+    apiDelete('/api/offboarded/' + id)
+        .then(function() { loadOffboarded(); });
+}
+
+function showTrainingModal(data) {
+    currentEditId = data ? data.trainingID : null;
+    document.getElementById('trainingModalTitle').textContent = data ? 'Edit Training' : 'Add Training';
+    if (data) {
+        document.getElementById('tsCandidateId').value = data.candidateID || '';
+        document.getElementById('tsDomain').value = data.domain || '';
+        document.getElementById('tsStatus').value = data.status || '';
+        document.getElementById('tsDueDate').value = data.dueDate || '';
+        document.getElementById('tsCompletedDate').value = data.completedDate || '';
+    } else {
+        document.getElementById('tsCandidateId').value = '';
+        document.getElementById('tsDueDate').value = '';
+        document.getElementById('tsCompletedDate').value = '';
+    }
+    document.getElementById('trainingModal').classList.add('show');
+}
+
+function saveTraining() {
+    var data = {
+        candidateID: parseInt(document.getElementById('tsCandidateId').value),
+        domain: document.getElementById('tsDomain').value,
+        status: document.getElementById('tsStatus').value,
+        dueDate: document.getElementById('tsDueDate').value,
+        completedDate: document.getElementById('tsCompletedDate').value
+    };
+
+    var promise = currentEditId ?
+        apiPatch('/api/trainingstatus/' + currentEditId, data) :
+        apiPost('/api/trainingstatus', data);
+
+    promise.then(function() {
+        closeModal('trainingModal');
+        loadTrainingStatus();
+    });
+}
+
+function editTraining(id) {
+    var t = allTrainingData.find(function(t) { return t.trainingID === id; });
+    if (t) showTrainingModal(t);
+}
+
+function deleteTraining(id) {
+    if (!confirm('Delete this training record?')) return;
+    apiDelete('/api/trainingstatus/' + id)
+        .then(function() { loadTrainingStatus(); });
+}
+
+function showStepModal(data) {
+    currentEditId = data ? data.stepID : null;
+    document.getElementById('stepModalTitle').textContent = data ? 'Edit Step' : 'Add Step';
+    if (data) {
+        document.getElementById('stepTeam').value = data.teamName || '';
+        document.getElementById('stepName').value = data.stepName || '';
+        document.getElementById('stepOrder').value = data.stepOrder || '';
+        document.getElementById('stepDesc').value = data.description || '';
+    } else {
+        var currentTeam = document.getElementById('teamSelector').value;
+        document.getElementById('stepTeam').value = currentTeam;
+        document.getElementById('stepName').value = '';
+        document.getElementById('stepOrder').value = '';
+        document.getElementById('stepDesc').value = '';
+    }
+    document.getElementById('stepModal').classList.add('show');
+}
+
+function saveStep() {
+    var data = {
+        teamName: document.getElementById('stepTeam').value,
+        stepName: document.getElementById('stepName').value,
+        stepOrder: parseInt(document.getElementById('stepOrder').value),
+        description: document.getElementById('stepDesc').value
+    };
+
+    var promise = currentEditId ?
+        apiPatch('/api/onboarding/steps/' + currentEditId, data) :
+        apiPost('/api/onboarding/steps', data);
+
+    promise.then(function() {
+        closeModal('stepModal');
+        loadOnboardingByTeam();
+    });
+}
+
+function editStep(id) {
+    var step = allSteps.find(function(s) { return s.stepID === id; });
+    if (step) showStepModal(step);
+}
+
+function deleteStep(id) {
+    if (!confirm('Delete this step?')) return;
+    apiDelete('/api/onboarding/steps/' + id)
+        .then(function() { loadOnboardingByTeam(); });
+}
+
+function showUserModal(data) {
+    currentEditId = data ? data.userID : null;
+    document.getElementById('userModalTitle').textContent = data ? 'Edit User' : 'Add User';
+    if (data) {
+        document.getElementById('uUsername').value = data.username || '';
+        document.getElementById('uRole').value = data.role || 'User';
+        document.getElementById('uActive').value = data.isActive ? 'true' : 'false';
+    } else {
+        document.getElementById('uUsername').value = '';
+        document.getElementById('uPassword').value = '';
+    }
+    document.getElementById('userModal').classList.add('show');
+}
+
+function saveUser() {
+    var data = {
+        username: document.getElementById('uUsername').value,
+        passwordHash: document.getElementById('uPassword').value,
+        role: document.getElementById('uRole').value,
+        isActive: document.getElementById('uActive').value === 'true'
+    };
+
+    var promise = currentEditId ?
+        apiPatch('/api/users/' + currentEditId, data) :
+        apiPost('/api/users', data);
+
+    promise.then(function() {
+        closeModal('userModal');
+        loadUsers();
+    });
+}
+
+function editUser(id) {
+    apiGet('/api/users').then(function(data) {
+        var user = data.find(function(u) { return u.userID === id; });
+        if (user) showUserModal(user);
+    });
+}
+
+function deleteUser(id) {
+    if (!confirm('Delete this user?')) return;
+    apiDelete('/api/users/' + id)
+        .then(function() { loadUsers(); });
+}
+
+function showPRSDModal(lob, track) {
+    currentEditId = lob ? { lob: lob, track: track } : null;
+    document.getElementById('prsdModalTitle').textContent = lob ? 'Edit PRSD' : 'Add PRSD';
+    document.getElementById('prsdModal').classList.add('show');
+}
+
+function savePRSD() {
+    var data = {
+        lob: document.getElementById('prsdLOB').value,
+        trackName: document.getElementById('prsdTrack').value,
+        prodSupportApplicable: document.getElementById('prsdApplicable').value,
+        prodSupport: document.getElementById('prsdStatus').value,
+        prodSupportConfidenceLevel: document.getElementById('prsdConfidence').value,
+        prodSupportETA: document.getElementById('prsdETA').value,
+        prodSupportChallenges: document.getElementById('prsdChallenges').value,
+        resourceName: document.getElementById('prsdResource').value,
+        contactNumber: document.getElementById('prsdContact').value
+    };
+
+    var promise = currentEditId ?
+        apiPatch('/api/prsd', data) :
+        apiPost('/api/prsd', data);
+
+    promise.then(function() {
+        closeModal('prsdModal');
+        loadPRSD();
+    });
+}
+
+function editPRSD(lob, track) {
+    showPRSDModal(lob, track);
+}
+
+function deletePRSD(lob, track) {
+    if (!confirm('Delete this PRSD record?')) return;
+    apiDelete('/api/prsd?lob=' + encodeURIComponent(lob) + '&trackName=' + encodeURIComponent(track))
+        .then(function() { loadPRSD(); });
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+    currentEditId = null;
+}
+
+// FILTER AND SORT
+function filterTable(tableId, query) {
+    var rows = document.getElementById(tableId).getElementsByTagName('tr');
+    for (var i = 1; i < rows.length; i++) {
+        rows[i].style.display =
+            rows[i].textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+    }
+}
+
+function sortTable(tableId, col) {
+    var table = document.getElementById(tableId);
+    var rows = Array.from(table.getElementsByTagName('tr')).slice(1);
+    var asc = table.getAttribute('data-sort') !== 'asc';
+    table.setAttribute('data-sort', asc ? 'asc' : 'desc');
+    rows.sort(function(a, b) {
+        var x = a.cells[col] ? a.cells[col].textContent.trim() : '';
+        var y = b.cells[col] ? b.cells[col].textContent.trim() : '';
+        return asc ? x.localeCompare(y) : y.localeCompare(x);
+    });
+    var tbody = table.getElementsByTagName('tbody')[0];
+    rows.forEach(function(r) { tbody.appendChild(r); });
 }
 
 function logout() {
     localStorage.clear();
     window.location.href = 'index.html';
 }
+
+// Load initial data
+loadTeamList();
+loadOffboarded();
 </script>
 </body>
 </html>

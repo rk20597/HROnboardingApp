@@ -22,5 +22,13 @@ namespace HROnboarding.API.Controllers
             var projects = await _repo.GetProjects();
             return Ok(projects);
         }
+
+        [HttpDelete("{projectName}")]
+        public async Task<IActionResult> Delete(string projectName)
+        {
+            await _repo.DeleteProject(projectName);
+            return Ok(new { message = "Project deleted" });
+        }
+
     }
 }

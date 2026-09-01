@@ -1,12 +1,12 @@
 ﻿namespace HROnboarding.API.Models
 {
-    public class OnboardingProgress
+    public class TrainingStatus
     {
-        public int ProgressID { get; set; }
+        public int TrainingID { get; set; }
         public int CandidateID { get; set; }
-        public int StepID { get; set; }
+        public string? Domain { get; set; }
         public string? Status { get; set; }
+        public string? DueDate { get; set; }
         public string? CompletedDate { get; set; }
-        
     }
 }

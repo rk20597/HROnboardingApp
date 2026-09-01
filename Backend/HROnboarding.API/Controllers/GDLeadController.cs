@@ -22,5 +22,15 @@ namespace HROnboarding.API.Controllers
             return Ok(data);
         }
 
+        [HttpDelete("{skillSet}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(
+    string skillSet)
+        {
+            await _repo.DeleteGDLead(skillSet);
+            return Ok(new { message = "GD Lead deleted" });
+        }
+
+
     }
 }
