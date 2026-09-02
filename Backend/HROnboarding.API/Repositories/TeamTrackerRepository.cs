@@ -205,6 +205,142 @@ namespace HROnboarding.API.Repositories
             }
         }
 
+        public async Task UpdateTeamMember(TeamMember member)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "TeamMember")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                for (int row = 2; row <= sheet
+                    .Dimension.End.Row; row++)
+                {
+                    var id = Convert.ToInt32(
+                        sheet.Cells[row, 1].Value ?? 0);
+                    if (id == member.SrNo)
+                    {
+                        sheet.Cells[row, 2].Value = member.Name;
+                        sheet.Cells[row, 3].Value = member.Email;
+                        sheet.Cells[row, 4].Value = member.Location;
+                        sheet.Cells[row, 5].Value = member.Status;
+                        sheet.Cells[row, 6].Value = member.Expansion;
+                        sheet.Cells[row, 7].Value = member.City;
+                        sheet.Cells[row, 8].Value = member.LevelOriginal;
+                        sheet.Cells[row, 9].Value = member.Level;
+                        sheet.Cells[row, 10].Value = member.ClientLevel;
+                        sheet.Cells[row, 11].Value = member.OnboardingDate;
+                        sheet.Cells[row, 12].Value = member.Joined;
+                        sheet.Cells[row, 13].Value = member.JobFamily;
+                        sheet.Cells[row, 14].Value = member.GDLeader1;
+                        sheet.Cells[row, 15].Value = member.GDLeader2;
+                        sheet.Cells[row, 16].Value = member.GDLeader3;
+                        sheet.Cells[row, 17].Value = member.Project;
+                        sheet.Cells[row, 18].Value = member.ClientKTDelivery;
+                        sheet.Cells[row, 19].Value = member.ProjectDeliveryStarted;
+                        sheet.Cells[row, 20].Value = member.ToolAccessCompleted;
+                        sheet.Cells[row, 21].Value = member.Datadog;
+                        sheet.Cells[row, 22].Value = member.AKSTrained;
+                        sheet.Cells[row, 23].Value = member.ROVO;
+                        sheet.Cells[row, 24].Value = member.ClaudeCodeDevDay;
+                        sheet.Cells[row, 25].Value = member.AIFluency;
+                        sheet.Cells[row, 26].Value = member.Claude101;
+                        sheet.Cells[row, 27].Value = member.OtherAICertification;
+                        sheet.Cells[row, 28].Value = member.CoPilotTrained;
+                        sheet.Cells[row, 29].Value = member.ClientComplianceTrainings;
+                        sheet.Cells[row, 30].Value = member.SciFormaAccess;
+                        sheet.Cells[row, 31].Value = member.MobileNumber;
+                        sheet.Cells[row, 32].Value = member.Replacement;
+                        sheet.Cells[row, 33].Value = member.Comments;
+                        break;
+                    }
+                }
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task AddTeamMember(TeamMember member)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                using var package = new ExcelPackage(
+                    new FileInfo(_filePath));
+
+                ExcelWorksheet? sheet = null;
+                foreach (var ws in package.Workbook
+                    .Worksheets)
+                {
+                    if (ws.Name.Trim() == "TeamMember")
+                    {
+                        sheet = ws;
+                        break;
+                    }
+                }
+
+                if (sheet == null) return;
+
+                int newRow = sheet.Dimension.End.Row + 1;
+                sheet.Cells[newRow, 1].Value = newRow - 1;
+                sheet.Cells[newRow, 2].Value = member.Name;
+                sheet.Cells[newRow, 3].Value = member.Email;
+                sheet.Cells[newRow, 4].Value = member.Location;
+                sheet.Cells[newRow, 5].Value = member.Status;
+                sheet.Cells[newRow, 6].Value = member.Expansion;
+                sheet.Cells[newRow, 7].Value = member.City;
+                sheet.Cells[newRow, 8].Value = member.LevelOriginal;
+                sheet.Cells[newRow, 9].Value = member.Level;
+                sheet.Cells[newRow, 10].Value = member.ClientLevel;
+                sheet.Cells[newRow, 11].Value = member.OnboardingDate;
+                sheet.Cells[newRow, 12].Value = member.Joined;
+                sheet.Cells[newRow, 13].Value = member.JobFamily;
+                sheet.Cells[newRow, 14].Value = member.GDLeader1;
+                sheet.Cells[newRow, 15].Value = member.GDLeader2;
+                sheet.Cells[newRow, 16].Value = member.GDLeader3;
+                sheet.Cells[newRow, 17].Value = member.Project;
+                sheet.Cells[newRow, 18].Value = member.ClientKTDelivery;
+                sheet.Cells[newRow, 19].Value = member.ProjectDeliveryStarted;
+                sheet.Cells[newRow, 20].Value = member.ToolAccessCompleted;
+                sheet.Cells[newRow, 21].Value = member.Datadog;
+                sheet.Cells[newRow, 22].Value = member.AKSTrained;
+                sheet.Cells[newRow, 23].Value = member.ROVO;
+                sheet.Cells[newRow, 24].Value = member.ClaudeCodeDevDay;
+                sheet.Cells[newRow, 25].Value = member.AIFluency;
+                sheet.Cells[newRow, 26].Value = member.Claude101;
+                sheet.Cells[newRow, 27].Value = member.OtherAICertification;
+                sheet.Cells[newRow, 28].Value = member.CoPilotTrained;
+                sheet.Cells[newRow, 29].Value = member.ClientComplianceTrainings;
+                sheet.Cells[newRow, 30].Value = member.SciFormaAccess;
+                sheet.Cells[newRow, 31].Value = member.MobileNumber;
+                sheet.Cells[newRow, 32].Value = member.Replacement;
+                sheet.Cells[newRow, 33].Value = member.Comments;
+
+                await package.SaveAsync();
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+
 
         // ==================
         // ONBOARDING STEPS
@@ -235,27 +371,36 @@ namespace HROnboarding.API.Repositories
                 if (sheet == null) return steps;
 
                 for (int row = 2; row <= sheet
-                    .Dimension.End.Row; row++)
+    .Dimension.End.Row; row++)
                 {
-                    var stepName = sheet.Cells[row, 2]
+                    var stepName = sheet.Cells[row, 3]
                         .Value?.ToString();
                     if (string.IsNullOrEmpty(stepName))
                         continue;
+
+                    var stepIdVal = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    int stepId = 0;
+                    int.TryParse(stepIdVal, out stepId);
+
+                    var stepOrderVal = sheet.Cells[row, 4]
+                        .Value?.ToString();
+                    int stepOrder = 0;
+                    int.TryParse(stepOrderVal, out stepOrder);
+
                     steps.Add(new OnboardingStep
                     {
-                        StepID = Convert.ToInt32(
-                            sheet.Cells[row, 1]
-                            .Value ?? 0),
+                        StepID = stepId,
+                        TeamName = sheet.Cells[row, 2]
+                            .Value?.ToString(),
                         StepName = stepName,
-                        StepOrder = Convert.ToInt32(
-                            sheet.Cells[row, 3]
-                            .Value ?? 0),
-                        Description = sheet
-                            .Cells[row, 4]
+                        StepOrder = stepOrder,
+                        Description = sheet.Cells[row, 5]
                             .Value?.ToString()
                     });
                 }
                 return steps;
+
             }
             finally
             {
@@ -291,10 +436,12 @@ namespace HROnboarding.API.Repositories
                 sheet.Cells[newRow, 1].Value =
                     newRow - 1;
                 sheet.Cells[newRow, 2].Value =
-                    step.StepName;
+                    step.TeamName;
                 sheet.Cells[newRow, 3].Value =
-                    step.StepOrder;
+                    step.StepName;
                 sheet.Cells[newRow, 4].Value =
+                    step.StepOrder;
+                sheet.Cells[newRow, 5].Value =
                     step.Description;
 
                 await package.SaveAsync();
@@ -336,10 +483,12 @@ namespace HROnboarding.API.Repositories
                     if (id == step.StepID)
                     {
                         sheet.Cells[row, 2].Value =
-                            step.StepName;
+                            step.TeamName;
                         sheet.Cells[row, 3].Value =
-                            step.StepOrder;
+                            step.StepName;
                         sheet.Cells[row, 4].Value =
+                            step.StepOrder;
+                        sheet.Cells[row, 5].Value =
                             step.Description;
                         break;
                     }
@@ -1053,6 +1202,37 @@ namespace HROnboarding.API.Repositories
             }  
        
         }
+
+        public async Task<List<object>> GetTrainingStatusWithNames()
+        {
+            var training = await GetTrainingStatus();
+            var members = await GetAllMembers();
+
+            var result = training.Select(t => {
+                var member = members.FirstOrDefault(
+                    m => m.SrNo == t.CandidateID);
+                return (object)new
+                {
+                    trainingID = t.TrainingID,
+                    candidateID = t.CandidateID,
+                    candidateName = member?.Name ??
+                        "Unknown",
+                    domain = t.Domain,
+                    status = t.Status,
+                    dueDate = t.DueDate,
+                    completedDate = t.CompletedDate,
+                    isOverdue = !string.IsNullOrEmpty(
+                        t.DueDate) &&
+                        t.Status != "Completed" &&
+                        DateTime.TryParse(t.DueDate,
+                            out DateTime due) &&
+                        due < DateTime.Now
+                };
+            }).ToList();
+
+            return result;
+        }
+
 
         // ADD TRAINING STATUS
         public async Task AddTrainingStatus(TrainingStatus training)

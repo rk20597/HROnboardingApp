@@ -75,6 +75,13 @@ namespace HROnboarding.API.Controllers
                 message = "Training deleted"
             });
         }
+
+        [HttpGet("withnames")]
+        public async Task<IActionResult> GetWithNames()
+        {
+            var data = await _repo.GetTrainingStatusWithNames();
+            return Ok(data);
+        }
     }
 }
 

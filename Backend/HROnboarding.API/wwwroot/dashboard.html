@@ -43,7 +43,7 @@
             background: white;
             padding: 0 25px;
             border-bottom: 2px solid #e0e0e0;
-            overflow-x: auto;
+            overflow: visible;
             white-space: nowrap;
         }
         .tab-btn {
@@ -376,9 +376,9 @@
         onclick="showTab('traininglinks', event)">
         Training Resources
     </button>
-    <span class="admin-only" style="display:none">
+    <span class="admin-only" style="display:none;white-space:nowrap;">
         <button class="tab-btn" id="mgmtBtn"
-            onclick="openManagement(event)">
+            onclick="showTab('management', event)">
             Management
         </button>
         <div style="display:inline-block;
@@ -538,7 +538,7 @@
                         <option value="NotStarted">Not Started</option>
                     </select>
                     <input class="search-box" type="text" id="trainingSearch" placeholder="Search..." onkeyup="applyTrainingFilter()">
-                    <button class="btn-add admin-only" style="display:none" onclick="showTrainingModal()">+ Add</button>
+                    <button class="btn-add" onclick="showTrainingModal()">+ Add</button>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -547,11 +547,12 @@
                         <tr>
                             <th>ID</th>
                             <th onclick="sortTable('trainingStatusTable',1)">Candidate ID ↕</th>
-                            <th onclick="sortTable('trainingStatusTable',2)">Domain ↕</th>
-                            <th onclick="sortTable('trainingStatusTable',3)">Status ↕</th>
+			    <th onclick="sortTable('trainingStatusTable',2)">Name</th>
+                            <th onclick="sortTable('trainingStatusTable',3)">Domain ↕</th>
+                            <th onclick="sortTable('trainingStatusTable',4)">Status ↕</th>
                             <th>Due Date</th>
                             <th>Completed Date</th>
-                            <th class="admin-only" style="display:none">Actions</th>
+			    <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="trainingStatusBody">
@@ -613,8 +614,6 @@
                 <h3>Management</h3>
                 <div class="filters">
                     <select class="filter-select" id="mgmtSection" onchange="loadManagement()">
-                        <option value="members">Team Members</option>
-                        <option value="training">Training Status</option>
                         <option value="steps">Onboarding Steps</option>
                         <option value="offboarded">Offboarded</option>
                         <option value="users">Users</option>
@@ -849,9 +848,15 @@
 <!-- Training Modal -->
 <div class="modal-overlay" id="trainingModal">
     <div class="modal">
-        <h3 id="trainingModalTitle">Add Training Status</h3>
-        <div class="form-group"><label>Candidate ID</label><input type="number" id="tsCandidateId"></div>
-        <div class="form-group"><label>Domain</label>
+        <h3 id="trainingModalTitle">
+            Add Training Status
+        </h3>
+        <div class="form-group">
+            <label>Candidate ID</label>
+            <input type="number" id="tsCandidateId">
+        </div>
+        <div class="form-group">
+            <label>Domain</label>
             <select id="tsDomain">
                 <option>Datadog</option>
                 <option>AKS</option>
@@ -859,20 +864,40 @@
                 <option>Copilot</option>
                 <option>AI Fluency</option>
                 <option>Claude 101</option>
+                <option>Github Copilot</option>
             </select>
         </div>
-        <div class="form-group"><label>Status</label>
+        <div class="form-group">
+            <label>Status</label>
             <select id="tsStatus">
-                <option>NotStarted</option>
-                <option>InProgress</option>
-                <option>Completed</option>
+                <option value="NotStarted">
+                    Not Started
+                </option>
+                <option value="InProgress">
+                    In Progress
+                </option>
+                <option value="Completed">
+                    Completed
+                </option>
             </select>
         </div>
-        <div class="form-group"><label>Due Date</label><input type="date" id="tsDueDate"></div>
-        <div class="form-group"><label>Completed Date</label><input type="date" id="tsCompletedDate"></div>
+        <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" id="tsDueDate">
+        </div>
+        <div class="form-group">
+            <label>Completed Date</label>
+            <input type="date" id="tsCompletedDate">
+        </div>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeModal('trainingModal')">Cancel</button>
-            <button class="btn-save" onclick="saveTraining()">Save</button>
+            <button class="btn-cancel" 
+                onclick="closeModal('trainingModal')">
+                Cancel
+            </button>
+            <button class="btn-save" 
+                onclick="saveTraining()">
+                Save
+            </button>
         </div>
     </div>
 </div>
@@ -1079,20 +1104,37 @@ function isOverdue(dueDate, status) {
 }
 
 // TAB SWITCHING
-function showTab(tabName, event) {
+function hideAllTabs() {
     document.querySelectorAll('.tab-content')
-        .forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.tab-btn, .dropdown-btn')
-        .forEach(function(b) { b.classList.remove('active'); });
+        .forEach(function(t) {
+            t.classList.remove('active');
+            t.style.display = 'none';
+        });
+    document.querySelectorAll('.tab-btn')
+        .forEach(function(b) {
+            b.classList.remove('active');
+        });
+}
 
-    var tab = document.getElementById('tab-' + tabName);
-    if (tab) tab.classList.add('active');
-    if (event && event.target) 
+function showTab(tabName, event) {
+    hideAllTabs();
+    var tab = document
+        .getElementById('tab-' + tabName);
+    if (tab) {
+        tab.style.display = 'block';
+        tab.classList.add('active');
+    }
+    if (event && event.target)
         event.target.classList.add('active');
 
-    if (tabName === 'teamlist') { loadTeamList(); loadOffboarded(); }
-    else if (tabName === 'trainingstatus') loadTrainingStatus();
-    else if (tabName === 'onboarding') loadOnboardingTeams();
+    if (tabName === 'teamlist') {
+        loadTeamList();
+        loadOffboarded();
+    }
+    else if (tabName === 'trainingstatus')
+        loadTrainingStatus();
+    else if (tabName === 'onboarding')
+        loadOnboardingTeams();
     else if (tabName === 'traininglinks') {}
     else if (tabName === 'gdlead') loadGDLead();
     else if (tabName === 'mandatory') loadMandatory();
@@ -1101,7 +1143,23 @@ function showTab(tabName, event) {
     else if (tabName === 'prsd') loadPRSD();
     else if (tabName === 'projects') loadProjects();
     else if (tabName === 'users') loadUsers();
+    else if (tabName === 'management') loadManagement();
 }
+
+function openManagement(event) {
+    event.stopPropagation();
+    hideAllTabs();
+    var mgmtTab = document
+        .getElementById('tab-management');
+    mgmtTab.style.display = 'block';
+    mgmtTab.classList.add('active');
+    if (event && event.target)
+        event.target.classList.add('active');
+    document.getElementById('mgmtSection')
+        .value = 'steps';
+    loadManagement();
+}
+
 
 // ==================
 // TEAM LIST
@@ -1207,14 +1265,33 @@ function loadOffboarded() {
 function renderOffboardTable(data) {
     var start = (offboardPage - 1) * PAGE_SIZE;
     var paged = data.slice(start, start + PAGE_SIZE);
-    var tbody = document.getElementById('offboardBody');
+    var tbody = document
+        .getElementById('offboardBody');
     tbody.innerHTML = '';
 
+    if (!paged.length) {
+        tbody.innerHTML = 
+            '<tr><td colspan="6" class="loading">' +
+            'No data found</td></tr>';
+        renderPagination('offboardPagination',
+            data.length, offboardPage,
+            function(p) {
+                offboardPage = p;
+                renderOffboardTable(data);
+            });
+        return;
+    }
+
     paged.forEach(function(m) {
+        var id = m.candidateId || 
+            m.candidateID || 0;
         var adminActions = role === 'Admin' ?
-            '<td><button class="btn-delete" onclick="deleteOffboard(' + m.candidateId + ')">Del</button></td>' : '';
+            '<td><button class="btn-delete" ' +
+            'onclick="deleteOffboard(' + id + 
+            ')">Del</button></td>' : '<td></td>';
+
         tbody.innerHTML += '<tr>' +
-            '<td>' + safe(m.candidateId) + '</td>' +
+            '<td>' + id + '</td>' +
             '<td>' + safe(m.name) + '</td>' +
             '<td>' + safe(m.email) + '</td>' +
             '<td>' + safe(m.role) + '</td>' +
@@ -1222,17 +1299,19 @@ function renderOffboardTable(data) {
             adminActions + '</tr>';
     });
 
-    renderPagination('offboardPagination', data.length, offboardPage, function(p) {
-        offboardPage = p;
-        renderOffboardTable(data);
-    });
+    renderPagination('offboardPagination',
+        data.length, offboardPage,
+        function(p) {
+            offboardPage = p;
+            renderOffboardTable(data);
+        });
 }
 
 // ==================
 // TRAINING STATUS
 // ==================
 function loadTrainingStatus() {
-    apiGet('/api/trainingstatus')
+    apiGet('/api/trainingstatus/withnames')
     .then(function(data) {
         allTrainingData = data;
         trainingPage = 1;
@@ -1260,31 +1339,72 @@ function applyTrainingFilter() {
 function renderTrainingTable(data) {
     var start = (trainingPage - 1) * PAGE_SIZE;
     var paged = data.slice(start, start + PAGE_SIZE);
-    var tbody = document.getElementById('trainingStatusBody');
+    var tbody = document
+        .getElementById('trainingStatusBody');
     tbody.innerHTML = '';
 
-    paged.forEach(function(t) {
-        var overdue = isOverdue(t.dueDate, t.status);
-        var dueDateDisplay = t.dueDate ?
-            (overdue ? '<span class="overdue">⚠ ' + t.dueDate + '</span>' : t.dueDate) : '';
-        var adminActions = role === 'Admin' ?
-            '<td><button class="btn-edit" onclick="editTraining(' + t.trainingID + ')">Edit</button>' +
-            '<button class="btn-delete" onclick="deleteTraining(' + t.trainingID + ')">Del</button></td>' : '';
+    if (!paged.length) {
+        tbody.innerHTML = 
+            '<tr><td colspan="8" class="loading">' +
+            'No records found</td></tr>';
+        renderPagination('trainingPagination', 
+            data.length, trainingPage, 
+            function(p) {
+                trainingPage = p;
+                renderTrainingTable(data);
+            });
+        return;
+    }
 
-        tbody.innerHTML += '<tr>' +
+    paged.forEach(function(t) {
+        var overdue = t.isOverdue || 
+            (!t.completedDate && t.dueDate && 
+            new Date(t.dueDate) < new Date() && 
+            t.status !== 'Completed');
+
+        var dueDateDisplay = '';
+        if (t.dueDate) {
+            dueDateDisplay = overdue ?
+                '<span class="overdue">⚠ ' + 
+                t.dueDate + '</span>' :
+                t.dueDate;
+        }
+
+        var rowStyle = overdue ? 
+            ' style="background:#fff3f3;"' : '';
+
+        var actions = 
+            '<td>' +
+            '<button class="btn-edit" ' +
+            'onclick="editTraining(' + 
+            t.trainingID + ')">Edit</button>';
+
+        if (role === 'Admin') {
+            actions += 
+                '<button class="btn-delete" ' +
+                'onclick="deleteTraining(' + 
+                t.trainingID + ')">Del</button>';
+        }
+        actions += '</td>';
+
+        tbody.innerHTML += '<tr' + rowStyle + '>' +
             '<td>' + safe(t.trainingID) + '</td>' +
             '<td>' + safe(t.candidateID) + '</td>' +
+            '<td>' + safe(t.candidateName || '') + '</td>' +
             '<td>' + safe(t.domain) + '</td>' +
             '<td>' + statusBadge(t.status) + '</td>' +
             '<td>' + dueDateDisplay + '</td>' +
             '<td>' + safe(t.completedDate) + '</td>' +
-            adminActions + '</tr>';
+            actions +
+            '</tr>';
     });
 
-    renderPagination('trainingPagination', data.length, trainingPage, function(p) {
-        trainingPage = p;
-        renderTrainingTable(data);
-    });
+    renderPagination('trainingPagination', 
+        data.length, trainingPage, 
+        function(p) {
+            trainingPage = p;
+            renderTrainingTable(data);
+        });
 }
 
 // ==================
@@ -1408,17 +1528,103 @@ function loadTrainingLinks() {
 function loadManagement() {
     var section = document
         .getElementById('mgmtSection').value;
+    var container = document
+        .getElementById('managementContent');
+    container.innerHTML = 
+        '<p class="loading">Loading...</p>';
 
-    if (section === 'members') {
-        showTab('teamlist', {target: document.querySelector('.tab-btn')});
-    } else if (section === 'training') {
-        showTab('trainingstatus', {target: document.querySelector('.tab-btn')});
+    if (section === 'steps') {
+        var html = '<div style="margin-bottom:15px;">' +
+            '<select class="filter-select" ' +
+            'id="mgmtTeamSel" ' +
+            'onchange="loadMgmtSteps()" ' +
+            'style="min-width:200px;">' +
+            '<option value="">Select Team</option>';
+        projectTeams.forEach(function(t) {
+            html += '<option value="' + t + '">' + 
+                t + '</option>';
+        });
+        html += '</select>' +
+            '<button class="btn-add" ' +
+            'style="margin-left:10px;" ' +
+            'onclick="showStepModal()">' +
+            '+ Add Step</button></div>' +
+            '<div id="mgmtStepsContent"></div>';
+        container.innerHTML = html;
+
     } else if (section === 'offboarded') {
-        showTab('teamlist', {target: document.querySelector('.tab-btn')});
+        apiGet('/api/offboarded')
+        .then(function(data) {
+            var html = 
+                '<button class="btn-add" ' +
+                'style="margin-bottom:15px;" ' +
+                'onclick="showOffboardModal()">' +
+                '+ Add</button>' +
+                '<div class="table-wrapper">' +
+                '<table><thead><tr>' +
+                '<th>ID</th><th>Name</th>' +
+                '<th>Email</th><th>Role</th>' +
+                '<th>Reason</th><th>Actions</th>' +
+                '</tr></thead><tbody>';
+            if (!data || !data.length) {
+                html += '<tr><td colspan="6" ' +
+                    'class="loading">No data</td></tr>';
+            } else {
+                data.forEach(function(m) {
+                    html += '<tr>' +
+                        '<td>' + safe(m.candidateId) + '</td>' +
+                        '<td>' + safe(m.name) + '</td>' +
+                        '<td>' + safe(m.email) + '</td>' +
+                        '<td>' + safe(m.role) + '</td>' +
+                        '<td>' + safe(m.reason) + '</td>' +
+                        '<td><button class="btn-delete" ' +
+                        'onclick="deleteOffboard(' + 
+                        m.candidateId + ')">Del</button>' +
+                        '</td></tr>';
+                });
+            }
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }).catch(function() {
+            container.innerHTML = 
+                '<p class="error-text">Error loading</p>';
+        });
+
     } else if (section === 'users') {
-        showTab('users', {target: document.querySelector('.tab-btn')});
-    } else if (section === 'steps') {
-        showTab('onboarding', {target: document.querySelector('.tab-btn')});
+        apiGet('/api/users')
+        .then(function(data) {
+            var html = 
+                '<button class="btn-add" ' +
+                'style="margin-bottom:15px;" ' +
+                'onclick="showUserModal()">' +
+                '+ Add User</button>' +
+                '<div class="table-wrapper">' +
+                '<table><thead><tr>' +
+                '<th>ID</th><th>Username</th>' +
+                '<th>Role</th><th>Active</th>' +
+                '<th>Actions</th>' +
+                '</tr></thead><tbody>';
+            data.forEach(function(u) {
+                html += '<tr>' +
+                    '<td>' + safe(u.userID) + '</td>' +
+                    '<td>' + safe(u.username) + '</td>' +
+                    '<td>' + safe(u.role) + '</td>' +
+                    '<td>' + (u.isActive ? '✅' : '❌') + '</td>' +
+                    '<td>' +
+                    '<button class="btn-edit" ' +
+                    'onclick="editUser(' + u.userID + 
+                    ')">Edit</button>' +
+                    '<button class="btn-delete" ' +
+                    'onclick="deleteUser(' + u.userID + 
+                    ')">Del</button>' +
+                    '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }).catch(function() {
+            container.innerHTML = 
+                '<p class="error-text">Error loading</p>';
+        });
     }
 }
 
@@ -1537,21 +1743,31 @@ function loadProjects() {
 function loadUsers() {
     apiGet('/api/users')
     .then(function(data) {
-        var tbody = document.getElementById('usersBody');
+        var tbody = document
+            .getElementById('usersBody');
+        if (!tbody) return;
         tbody.innerHTML = '';
         data.forEach(function(u) {
             tbody.innerHTML += '<tr>' +
                 '<td>' + safe(u.userID) + '</td>' +
                 '<td>' + safe(u.username) + '</td>' +
                 '<td>' + safe(u.role) + '</td>' +
-                '<td>' + (u.isActive ? '✅' : '❌') + '</td>' +
+                '<td>' + (u.isActive ? '✅' : '❌') + 
+                '</td>' +
                 '<td>' +
-                '<button class="btn-edit" onclick="editUser(' + u.userID + ')">Edit</button>' +
-                '<button class="btn-delete" onclick="deleteUser(' + u.userID + ')">Del</button>' +
+                '<button class="btn-edit" ' +
+                'onclick="editUser(' + u.userID + 
+                ')">Edit</button>' +
+                '<button class="btn-delete" ' +
+                'onclick="deleteUser(' + u.userID + 
+                ')">Del</button>' +
                 '</td></tr>';
         });
+    }).catch(function() {
+        console.log('Error loading users');
     });
 }
+
 
 // ==================
 // PAGINATION
@@ -1665,10 +1881,20 @@ function saveOffboard() {
 }
 
 function deleteOffboard(id) {
-    if (!confirm('Delete this offboarded member?')) return;
+    if (!id || id === 0) {
+        alert('Invalid ID');
+        return;
+    }
+    if (!confirm('Delete this offboarded member?')) 
+        return;
     apiDelete('/api/offboarded/' + id)
-        .then(function() { loadOffboarded(); });
+    .then(function() {
+        loadOffboarded();
+    }).catch(function(e) {
+        alert('Error deleting: ' + e);
+    });
 }
+
 
 function showTrainingModal(data) {
     currentEditId = data ? data.trainingID : null;
@@ -1736,27 +1962,64 @@ function showStepModal(data) {
 }
 
 function saveStep() {
+    var teamName = document
+        .getElementById('stepTeam').value;
+    var stepName = document
+        .getElementById('stepName').value;
+    var stepOrder = document
+        .getElementById('stepOrder').value;
+    var desc = document
+        .getElementById('stepDesc').value;
+
+    if (!stepName || !stepOrder) {
+        alert('Please fill Step Name and Order');
+        return;
+    }
+
     var data = {
-        teamName: document.getElementById('stepTeam').value,
-        stepName: document.getElementById('stepName').value,
-        stepOrder: parseInt(document.getElementById('stepOrder').value),
-        description: document.getElementById('stepDesc').value
+        teamName: teamName,
+        stepName: stepName,
+        stepOrder: parseInt(stepOrder),
+        description: desc
     };
 
     var promise = currentEditId ?
-        apiPatch('/api/onboarding/steps/' + currentEditId, data) :
+        apiPatch('/api/onboarding/steps/' + 
+            currentEditId, data) :
         apiPost('/api/onboarding/steps', data);
 
     promise.then(function() {
         closeModal('stepModal');
         loadOnboardingByTeam();
+        loadMgmtSteps();
+    }).catch(function(e) {
+        alert('Error saving step');
     });
 }
 
+
 function editStep(id) {
-    var step = allSteps.find(function(s) { return s.stepID === id; });
-    if (step) showStepModal(step);
+    currentEditId = id;
+    var step = allSteps.find(
+        function(s) { return s.stepID === id; });
+    if (step) {
+        document.getElementById('stepModalTitle')
+            .textContent = 'Edit Step';
+        document.getElementById('stepTeam')
+            .value = step.teamName || '';
+        document.getElementById('stepName')
+            .value = step.stepName || '';
+        document.getElementById('stepOrder')
+            .value = step.stepOrder || '';
+        document.getElementById('stepDesc')
+            .value = step.description || '';
+        document.getElementById('stepModal')
+            .classList.add('show');
+    } else {
+        alert('Step not found. Try again.');
+    }
 }
+
 
 function deleteStep(id) {
     if (!confirm('Delete this step?')) return;
@@ -1779,11 +2042,30 @@ function showUserModal(data) {
 }
 
 function saveUser() {
+    var username = document
+        .getElementById('uUsername').value;
+    var password = document
+        .getElementById('uPassword').value;
+    var role = document
+        .getElementById('uRole').value;
+    var isActive = document
+        .getElementById('uActive').value === 'true';
+
+    if (!username) {
+        alert('Please enter username');
+        return;
+    }
+
+    if (!currentEditId && !password) {
+        alert('Please enter password for new user');
+        return;
+    }
+
     var data = {
-        username: document.getElementById('uUsername').value,
-        passwordHash: document.getElementById('uPassword').value,
-        role: document.getElementById('uRole').value,
-        isActive: document.getElementById('uActive').value === 'true'
+        username: username,
+        passwordHash: password,
+        role: userRole,
+        isActive: isActive
     };
 
     var promise = currentEditId ?
@@ -1793,15 +2075,39 @@ function saveUser() {
     promise.then(function() {
         closeModal('userModal');
         loadUsers();
+        if (document.getElementById('mgmtSection')) {
+            loadManagement();
+        }
+    }).catch(function(e) {
+        alert('Error saving user');
     });
 }
 
+
 function editUser(id) {
-    apiGet('/api/users').then(function(data) {
-        var user = data.find(function(u) { return u.userID === id; });
-        if (user) showUserModal(user);
+    apiGet('/api/users')
+    .then(function(data) {
+        var user = data.find(
+            function(u) { return u.userID === id; });
+        if (user) {
+            currentEditId = id;
+            document.getElementById('userModalTitle')
+                .textContent = 'Edit User';
+            document.getElementById('uUsername')
+                .value = user.username || '';
+            document.getElementById('uPassword')
+                .value = '';
+            document.getElementById('uRole')
+                .value = user.role || 'User';
+            document.getElementById('uActive')
+                .value = user.isActive ? 
+                'true' : 'false';
+            document.getElementById('userModal')
+                .classList.add('show');
+        }
     });
 }
+
 
 function deleteUser(id) {
     if (!confirm('Delete this user?')) return;
@@ -1876,20 +2182,6 @@ function sortTable(tableId, col) {
     rows.forEach(function(r) { tbody.appendChild(r); });
 }
 
-function openManagement(event) {
-    document.querySelectorAll('.tab-content')
-        .forEach(function(t) {
-            t.classList.remove('active');
-        });
-    document.querySelectorAll('.tab-btn')
-        .forEach(function(b) {
-            b.classList.remove('active');
-        });
-    document.getElementById('tab-management')
-        .classList.add('active');
-    event.target.classList.add('active');
-    loadManagement();
-}
 
 function toggleOther(event) {
     event.stopPropagation();
@@ -1903,18 +2195,13 @@ function toggleOther(event) {
 function openOther(tabName) {
     document.getElementById('otherMenu')
         .style.display = 'none';
-    document.querySelectorAll('.tab-content')
-        .forEach(function(t) {
-            t.classList.remove('active');
-        });
-    document.querySelectorAll('.tab-btn')
-        .forEach(function(b) {
-            b.classList.remove('active');
-        });
+    hideAllTabs();
     var tab = document
         .getElementById('tab-' + tabName);
-    if (tab) tab.classList.add('active');
-
+    if (tab) {
+        tab.style.display = 'block';
+        tab.classList.add('active');
+    }
     if (tabName === 'gdlead') loadGDLead();
     else if (tabName === 'mandatory') loadMandatory();
     else if (tabName === 'demography') loadDemography();

@@ -18,7 +18,7 @@ namespace HROnboarding.API.Controllers
         }
 
 
-        [HttpGet("steps")]
+        [HttpGet("teamsteps/{teamName}")]
         public async Task<IActionResult> GetStepsByTeam(string teamName) 
         {
             var steps = await _repo.GetOnboardingStepsByTeam(teamName);

@@ -26,6 +26,7 @@
         public string? AKSTrained { get; set; }
         public string? ROVO {  get; set; }
         public string? AIFluency { get; set; }
+        public string? ClaudeCodeDevDay { get; set; }
         public string? Claude101 { get; set; }
         public string? OtherAICertification { get; set; }
         public string? CoPilotTrained { get; set; }

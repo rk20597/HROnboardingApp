@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HROnboarding.API.Models;
 using HROnboarding.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HROnboarding.API.Controllers
 {
@@ -49,6 +50,17 @@ namespace HROnboarding.API.Controllers
             await _repo.DeleteTeamMember(srNo);
             return Ok(new { message = "Member deleted" });
         }
+
+        [HttpPatch("{srNo}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(
+    int srNo, [FromBody] TeamMember member)
+        {
+            member.SrNo = srNo;
+            await _repo.UpdateTeamMember(member);
+            return Ok(new { message = "Member updated" });
+        }
+
 
 
         //[HttpGet("debug")]
