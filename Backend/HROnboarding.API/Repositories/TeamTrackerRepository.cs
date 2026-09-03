@@ -1191,7 +1191,7 @@ namespace HROnboarding.API.Repositories
                         Domain = domain,
                         Status = sheet.Cells[row, 4].Value?.ToString(),
                         DueDate = sheet.Cells[row, 5].Value?.ToString(),
-                        CompletedDate = sheet.Cells[row, 6]?.ToString(),
+                        CompletedDate = sheet.Cells[row, 6].Value?.ToString(),
                     });
                 }
                 return list;
@@ -1252,9 +1252,9 @@ namespace HROnboarding.API.Repositories
                     }
                 }
 
-                if (sheet != null) return;
+                if (sheet == null) return;
 
-                int newRow = sheet.Dimension.End.Row + 1;
+                int newRow = (sheet.Dimension?.End?.Row ?? 1) + 1;
                 sheet.Cells[newRow, 1].Value = newRow - 1;
                 sheet.Cells[newRow, 2].Value = training.CandidateID;
                 sheet.Cells[newRow, 3].Value = training.Domain;
@@ -1286,19 +1286,31 @@ namespace HROnboarding.API.Repositories
                 }
                 if(sheet != null) return;
 
-                for (int row = 2; row <= sheet.Dimension.End.Row; row++)
+                if (sheet == null) return;
+                for (int row = 2; row <= sheet
+    .Dimension.End.Row; row++)
                 {
-                    var id = Convert.ToInt32(sheet.Cells[row, 1].Value ?? 0);
-                    if (id == training.TrainingID) 
+                    var idVal = sheet.Cells[row, 1]
+                        .Value?.ToString();
+                    int id = 0;
+                    int.TryParse(idVal, out id);
+                    if (id == training.TrainingID)
                     {
-                        sheet.Cells[row, 3].Value = training.Domain;
-                        sheet.Cells[row, 4].Value = training.Status;
-                        sheet.Cells[row, 5].Value =training.DueDate;
-                        sheet.Cells[row, 6].Value = training.CompletedDate;
+                        sheet.Cells[row, 3].Value =
+                            training.Domain;
+                        sheet.Cells[row, 4].Value =
+                            training.Status;
+                        sheet.Cells[row, 5].Value =
+                            training.DueDate;
+                        sheet.Cells[row, 6].Value =
+                            training.CompletedDate;
                         break;
                     }
                 }
+                Console.WriteLine("Saving...");
                 await package.SaveAsync();
+                Console.WriteLine("Saved!");
+
             }
             finally
             { 

@@ -17,7 +17,7 @@ namespace HROnboarding.API.Controllers
         }
 
         [HttpGet("active")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> GetActive()
         {
             var members = await _repo.GetActiveMembers();
@@ -26,7 +26,7 @@ namespace HROnboarding.API.Controllers
         }
 
         [HttpGet("inactive")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> GetInactive()
         {
             var members = await _repo.GetInactiveMembers();
@@ -35,7 +35,7 @@ namespace HROnboarding.API.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> GetAll()
         {
             var members = await _repo.GetAllMembers();

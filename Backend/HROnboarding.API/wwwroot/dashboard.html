@@ -969,7 +969,7 @@
 </div>
 
 <script>
-const API = '';
+const API = 'http://localhost:5289';
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role');
 const username = localStorage.getItem('username');
@@ -1015,6 +1015,7 @@ var allOffboardData = [];
 var allSteps = [];
 var currentEditId = null;
 var currentEditType = null;
+var originalTrainingData = [];
 
 // Project teams for dropdown
 var projectTeams = [
@@ -1314,11 +1315,12 @@ function loadTrainingStatus() {
     apiGet('/api/trainingstatus/withnames')
     .then(function(data) {
         allTrainingData = data;
+	originalTrainingData = data;
         trainingPage = 1;
         renderTrainingTable(data);
     }).catch(function() {
         document.getElementById('trainingStatusBody').innerHTML =
-            '<tr><td colspan="7" class="error-text">Error loading</td></tr>';
+            '<tr><td colspan="8" class="error-text">Error loading</td></tr>';
     });
 }
 
@@ -1326,6 +1328,7 @@ function applyTrainingFilter() {
     var domain = document.getElementById('trainingDomainFilter').value;
     var status = document.getElementById('trainingStatusFilter').value;
     var search = document.getElementById('trainingSearch').value.toLowerCase();
+    
 
     var filtered = allTrainingData.filter(function(t) {
         return (!domain || t.domain === domain) &&
@@ -1363,12 +1366,17 @@ function renderTrainingTable(data) {
             t.status !== 'Completed');
 
         var dueDateDisplay = '';
-        if (t.dueDate) {
-            dueDateDisplay = overdue ?
-                '<span class="overdue">⚠ ' + 
-                t.dueDate + '</span>' :
-                t.dueDate;
-        }
+		if (t.dueDate) {
+    			var dateOnly = t.dueDate.split(' ')[0];
+    		if (t.isOverdue) {
+        		dueDateDisplay = 
+            	'<span class="overdue">⚠ ' + 
+            	dateOnly + '</span>';
+    		} else {
+        	dueDateDisplay = dateOnly;
+    }
+}
+
 
         var rowStyle = overdue ? 
             ' style="background:#fff3f3;"' : '';
@@ -1377,7 +1385,7 @@ function renderTrainingTable(data) {
             '<td>' +
             '<button class="btn-edit" ' +
             'onclick="editTraining(' + 
-            t.trainingID + ')">Edit</button>';
+            JSON.stringify(t.trainingID) + ')">Edit</button>';
 
         if (role === 'Admin') {
             actions += 
@@ -1607,7 +1615,7 @@ function loadManagement() {
             data.forEach(function(u) {
                 html += '<tr>' +
                     '<td>' + safe(u.userID) + '</td>' +
-                    '<td>' + safe(u.username) + '</td>' +
+                    '<td>' + safe(u.userName) + '</td>' +
                     '<td>' + safe(u.role) + '</td>' +
                     '<td>' + (u.isActive ? '✅' : '❌') + '</td>' +
                     '<td>' +
@@ -1897,7 +1905,7 @@ function deleteOffboard(id) {
 
 
 function showTrainingModal(data) {
-    currentEditId = data ? data.trainingID : null;
+    currentEditId = data ? Number(data.trainingID) : null;
     document.getElementById('trainingModalTitle').textContent = data ? 'Edit Training' : 'Add Training';
     if (data) {
         document.getElementById('tsCandidateId').value = data.candidateID || '';
@@ -1915,27 +1923,81 @@ function showTrainingModal(data) {
 
 function saveTraining() {
     var data = {
-        candidateID: parseInt(document.getElementById('tsCandidateId').value),
-        domain: document.getElementById('tsDomain').value,
-        status: document.getElementById('tsStatus').value,
-        dueDate: document.getElementById('tsDueDate').value,
-        completedDate: document.getElementById('tsCompletedDate').value
+        candidateID: parseInt(document
+            .getElementById('tsCandidateId').value),
+        domain: document
+            .getElementById('tsDomain').value,
+        status: document
+            .getElementById('tsStatus').value,
+        dueDate: document
+            .getElementById('tsDueDate').value || null,
+        completedDate: document
+            .getElementById('tsCompletedDate').value || null
     };
 
-    var promise = currentEditId ?
-        apiPatch('/api/trainingstatus/' + currentEditId, data) :
-        apiPost('/api/trainingstatus', data);
+    if (!data.candidateID || !data.domain) {
+        alert('Candidate ID and Domain required');
+        return;
+    }
 
-    promise.then(function() {
-        closeModal('trainingModal');
-        loadTrainingStatus();
+    var url = currentEditId ?
+        '/api/trainingstatus/' + currentEditId :
+        '/api/trainingstatus';
+    var method = currentEditId ? 'PATCH' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(r) {
+        
+        if (r.ok) {
+            closeModal('trainingModal');
+            currentEditId = null;
+            loadTrainingStatus();
+        }
+    })
+    .catch(function(e) {
+        alert('Error: ' + e);
     });
 }
 
+
+
 function editTraining(id) {
-    var t = allTrainingData.find(function(t) { return t.trainingID === id; });
-    if (t) showTrainingModal(t);
+    currentEditId = Number(id);
+    var t = null;
+    for (var i = 0; i < allTrainingData.length; i++) {
+        if (Number(allTrainingData[i].trainingID) === 
+            Number(id)) {
+            t = allTrainingData[i];
+            break;
+        }
+    }
+    if (t) {
+        document.getElementById('trainingModalTitle')
+            .textContent = 'Edit Training';
+        document.getElementById('tsCandidateId')
+            .value = t.candidateID || '';
+        document.getElementById('tsDomain')
+            .value = t.domain || '';
+        document.getElementById('tsStatus')
+            .value = t.status || t.Status || 'NotStarted';
+        document.getElementById('tsDueDate')
+    .value = formatDateForInput(t.dueDate);
+	document.getElementById('tsCompletedDate')
+    .value = formatDateForInput(t.completedDate);
+	document.getElementById('trainingModal')
+            .classList.add('show');
+    } else {
+        alert('Record not found. ID:');
+    }
 }
+
 
 function deleteTraining(id) {
     if (!confirm('Delete this training record?')) return;
@@ -2001,7 +2063,7 @@ function saveStep() {
 function editStep(id) {
     currentEditId = id;
     var step = allSteps.find(
-        function(s) { return s.stepID === id; });
+        function(s) { return s.stepID == id; });
     if (step) {
         document.getElementById('stepModalTitle')
             .textContent = 'Edit Step';
@@ -2029,24 +2091,30 @@ function deleteStep(id) {
 
 function showUserModal(data) {
     currentEditId = data ? data.userID : null;
-    document.getElementById('userModalTitle').textContent = data ? 'Edit User' : 'Add User';
-    if (data) {
-        document.getElementById('uUsername').value = data.username || '';
-        document.getElementById('uRole').value = data.role || 'User';
-        document.getElementById('uActive').value = data.isActive ? 'true' : 'false';
-    } else {
-        document.getElementById('uUsername').value = '';
-        document.getElementById('uPassword').value = '';
-    }
-    document.getElementById('userModal').classList.add('show');
+    document.getElementById('userModalTitle')
+        .textContent = data ? 
+        'Edit User' : 'Add User';
+    document.getElementById('uUsername')
+        .value = data ? 
+        (data.userName || data.username || '') : '';
+    document.getElementById('uPassword')
+        .value = '';
+    document.getElementById('uRole')
+        .value = data ? (data.role || 'User') : 'User';
+    document.getElementById('uActive')
+        .value = data ? 
+        (data.isActive ? 'true' : 'false') : 'true';
+    document.getElementById('userModal')
+        .classList.add('show');
 }
+
 
 function saveUser() {
     var username = document
         .getElementById('uUsername').value;
     var password = document
         .getElementById('uPassword').value;
-    var role = document
+    var userRole = document
         .getElementById('uRole').value;
     var isActive = document
         .getElementById('uActive').value === 'true';
@@ -2056,45 +2124,54 @@ function saveUser() {
         return;
     }
 
-    if (!currentEditId && !password) {
-        alert('Please enter password for new user');
-        return;
-    }
-
     var data = {
-        username: username,
+        userName: username,
         passwordHash: password,
         role: userRole,
         isActive: isActive
     };
 
-    var promise = currentEditId ?
-        apiPatch('/api/users/' + currentEditId, data) :
-        apiPost('/api/users', data);
+    var url = currentEditId ?
+        '/api/users/' + currentEditId :
+        '/api/users';
+    var method = currentEditId ? 'PATCH' : 'POST';
 
-    promise.then(function() {
-        closeModal('userModal');
-        loadUsers();
-        if (document.getElementById('mgmtSection')) {
+    fetch(url, {
+        method: method,
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(r) {
+        if (r.ok) {
+            closeModal('userModal');
+            currentEditId = null;
             loadManagement();
+        } else {
+            alert('Error: ' + r.status);
         }
-    }).catch(function(e) {
-        alert('Error saving user');
+    })
+    .catch(function(e) {
+        alert('Failed: ' + e);
     });
 }
+
 
 
 function editUser(id) {
     apiGet('/api/users')
     .then(function(data) {
-        var user = data.find(
-            function(u) { return u.userID === id; });
+        var user = data.find(function(u) { 
+            return u.userID === id; 
+        });
         if (user) {
             currentEditId = id;
             document.getElementById('userModalTitle')
                 .textContent = 'Edit User';
             document.getElementById('uUsername')
-                .value = user.username || '';
+                .value = user.userName || '';
             document.getElementById('uPassword')
                 .value = '';
             document.getElementById('uRole')
@@ -2109,11 +2186,21 @@ function editUser(id) {
 }
 
 
+
 function deleteUser(id) {
+    if (!id) {
+        alert('Invalid user ID');
+        return;
+    }
     if (!confirm('Delete this user?')) return;
     apiDelete('/api/users/' + id)
-        .then(function() { loadUsers(); });
+    .then(function() {
+        loadManagement();
+    }).catch(function() {
+        alert('Error deleting user');
+    });
 }
+
 
 function showPRSDModal(lob, track) {
     currentEditId = lob ? { lob: lob, track: track } : null;
@@ -2209,6 +2296,20 @@ function openOther(tabName) {
     else if (tabName === 'prsd') loadPRSD();
     else if (tabName === 'projects') loadProjects();
     else if (tabName === 'users') loadUsers();
+}
+
+function formatDateForInput(dateStr) {
+    if (!dateStr) return '';
+    var parts = dateStr.toString().split(' ')[0];
+    var dateParts = parts.split('-');
+    if (dateParts.length === 3) {
+        if (dateParts[0].length === 4) {
+            return parts;
+        }
+        return dateParts[2] + '-' + 
+            dateParts[1] + '-' + dateParts[0];
+    }
+    return '';
 }
 
 document.addEventListener('click', function(e) {

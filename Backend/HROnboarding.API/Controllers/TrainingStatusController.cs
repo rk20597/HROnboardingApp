@@ -50,7 +50,7 @@ namespace HROnboarding.API.Controllers
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> Update(
             int id,
             [FromBody] TrainingStatus training)
